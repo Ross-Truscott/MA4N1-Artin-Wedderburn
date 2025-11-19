@@ -20,8 +20,16 @@ variable (R : Type u_2) [Ring R] (S : Type u_4) [AddCommGroup S] [Module R S] [I
 
 -- Define the Endomorphism ring of S and M = S^n
 variable (D : Module.End R S)
-variable {ι} (M : DirectSum ι fun (i : ι) => S i)
+def M {n} := DirectSum (Fin n) fun _ => S
 
+/-
+Standard proof : End(M) is determined by the action on each summand S. So, look at the inclusion
+ιᵢ: S → M & projection πᵢ: M → S and consider f_ij = πᵢfιⱼ ∈ End(S) (= D by Schurs lemma).
+Elements of M are (s_1,…,s_n) so we can consider
+f(s_1,…,s_n) = (∑f_1j(s_j),…,∑f_nj(s_j)), but this is just the matrix representation.
+This is a homomorphism clearly, and simple to show its bijective.
+This gives us that End(M)≅Mₙ(End(S))≅Mₙ(D) by Schurs lemma.
+-/
 
 
 end Lemma2
