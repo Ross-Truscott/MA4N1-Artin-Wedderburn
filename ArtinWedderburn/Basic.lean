@@ -85,6 +85,7 @@ def NEndEquivMatrixEnd
   --Proof theyre inverse
   left_inv := by
     intro M
+    simp
     sorry
   right_inv := by
     sorry
