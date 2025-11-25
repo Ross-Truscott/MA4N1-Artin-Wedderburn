@@ -49,6 +49,19 @@ def ideal (S : Set R) : Prop :=
 
 -- Statement of the theorem that the kernel of a ring homomorphism is an ideal.
 theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
-  sorry
+  constructor
+  · simp
+
+  constructor
+  · intro x y hx hy
+    simp at *
+    rw [hx, hy, zero_add]
+
+  constructor
+  · simp
+
+  intro x r hx
+  simp at *
+  rw [hx, mul_zero]
 
 end kernel_result
