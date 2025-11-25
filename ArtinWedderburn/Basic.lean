@@ -19,8 +19,8 @@ namespace Lemma2
 variable (R : Type u_2) [Ring R] (S : Type u_4) [AddCommGroup S] [Module R S] [IsSimpleModule R S]
 
 -- Define the Endomorphism ring of S and M = S^n
-variable (D : Module.End R S)
-def M {n} := DirectSum (Fin n) fun _ => S
+-- variable (D : Module.End R S)
+variable (M : DirectSum (Fin n) fun _ => S)
 
 /-
 Standard proof : End(M) is determined by the action on each summand S. So, look at the inclusion
