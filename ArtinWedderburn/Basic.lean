@@ -33,3 +33,16 @@ This gives us that End(M)≅Mₙ(End(S))≅Mₙ(D) by Schurs lemma.
 
 
 end Lemma2
+
+namespace kernel_result
+
+-- Define two rings and a ring homomorphism between them.
+variable {R : Type*} [Ring R]
+variable {S : Type*} [Ring S]
+variable (f : R →+* S)
+
+-- Statement of the theorem that the kernel of a ring homomorphism is an ideal.
+theorem ker_hom_is_ideal : ∃ (I : Ideal R), I = {r : R | f r = 0} := by
+  sorry
+
+end kernel_result
