@@ -41,8 +41,14 @@ variable {R : Type*} [Ring R]
 variable {S : Type*} [Ring S]
 variable (f : R →+* S)
 
+def ideal (S : Set R) : Prop :=
+  (0 ∈ S) ∧
+  (∀ x y, x ∈ S → y ∈ S → x+y ∈ S) ∧
+  (∀ x, x ∈ S → -x ∈ S) ∧
+  (∀ x r, x ∈ S → r * x ∈ S)
+
 -- Statement of the theorem that the kernel of a ring homomorphism is an ideal.
-theorem ker_hom_is_ideal : ∃ (I : Ideal R), I = {r : R | f r = 0} := by
+theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
   sorry
 
 end kernel_result
