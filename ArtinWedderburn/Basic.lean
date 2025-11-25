@@ -63,9 +63,10 @@ def NEndEquivMatrixEnd
       toFun s := F (Pi.single j s) i
       --Proof its linear
       map_add' s t := by
-         hello hello hello sorry
+        rw[Pi.single_add,map_add, Pi.add_apply]
       map_smul' r s := by
-        sorry
+        rw[Pi.single_smul]
+        simp
       }
     --Def of reverse map
   invFun M :=
@@ -74,7 +75,7 @@ def NEndEquivMatrixEnd
       ∑ j, M i j (v j)
       --Proof its linear
     map_add' v w := by
-      sorry
+
     map_smul' r v := by
       sorry
   }
@@ -83,6 +84,7 @@ def NEndEquivMatrixEnd
     sorry
   right_inv := by
     sorry
+
 
 
 end Lemma2
