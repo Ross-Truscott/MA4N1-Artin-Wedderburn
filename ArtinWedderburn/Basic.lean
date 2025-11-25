@@ -75,12 +75,16 @@ def NEndEquivMatrixEnd
       ∑ j, M i j (v j)
       --Proof its linear
     map_add' v w := by
-
+        funext i
+        simp [Finset.sum_add_distrib, map_add]
     map_smul' r v := by
-      sorry
+        funext i
+        simp
+        rw [Finset.smul_sum]
   }
   --Proof theyre inverse
   left_inv := by
+    intro M
     sorry
   right_inv := by
     sorry
