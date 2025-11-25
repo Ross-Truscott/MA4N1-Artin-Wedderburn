@@ -61,9 +61,9 @@ def NEndEquivMatrixEnd
   toFun F i j :=
     {
       toFun s := F (Pi.single j s) i
-      --Proof its linear test test test
+      --Proof its linear
       map_add' s t := by
-        sorry
+         hello hello hello sorry
       map_smul' r s := by
         sorry
       }
