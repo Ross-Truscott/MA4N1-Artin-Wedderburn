@@ -80,8 +80,15 @@ def NEndEquivMatrixEnd
         simp
         rw [Finset.smul_sum]
   }
-  --Proof theyre inverse
+  --Proof they are inverse
   left_inv := by
+    intro F
+    ext a b
+    simp
     sorry
+
   right_inv := by
+   intro M
+   ext a b c
+   simp
    sorry
