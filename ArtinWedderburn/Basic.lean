@@ -5,7 +5,6 @@ import Mathlib.Data.Matrix.Basic
 import Mathlib.Algebra.Ring.Equiv
 import Mathlib.Algebra.DirectSum.Module
 import Mathlib.RingTheory.SimpleModule.Basic
--- Remove SimpleModule.Basic later when I work out how to bring just the defintions
 
 namespace kernel_result
 
@@ -39,16 +38,15 @@ theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
 
 end kernel_result
 
-namespace Lemma2
 /-
-This section is on the Proof of Lemma 2 from the outline, which states:
+This is the Proof of Lemma 2 from the outline, which states:
 
 Thm: Let S be a simple R-module and D = End_R(S). Define M = S^n. Then End_R(M) = M_n(D)
 Proof : End(M) is determined by the action on each summand S. So, look at the inclusion
-ιᵢ: S → M & projection πᵢ: M → S and consider f_ij = πᵢfιⱼ ∈ End(S) (= D by Schurs lemma).
+ιᵢ: S → M & projection πᵢ: M → S and consider f_ij = πᵢfιⱼ ∈ End(S).
 Elements of M are (s_1,…,s_n) so we can consider
 f(s_1,…,s_n) = (∑f_1j(s_j),…,∑f_nj(s_j)), but this is just the matrix representation.
-This is a homomorphism clearly, and simple to show its bijective.
+This is a homomorphism, clearly, and its simple to show its bijective.
 This gives us that End(M)≅Mₙ(End(S))≅Mₙ(D) by Schurs lemma.
 
 This is still true without the simplicity assumption, so this is what we prove.
@@ -84,12 +82,6 @@ def NEndEquivMatrixEnd
   }
   --Proof theyre inverse
   left_inv := by
-    intro M
-    simp
     sorry
   right_inv := by
-    sorry
-
-
-
-end Lemma2
+   sorry
