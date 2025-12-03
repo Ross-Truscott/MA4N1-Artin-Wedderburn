@@ -90,5 +90,9 @@ def NEndEquivMatrixEnd
   right_inv := by
    intro M
    ext a b c
-   simp
-   sorry
+   simp [Pi.single_apply]
+   rw [Finset.sum_eq_single b]
+   · simp only [↓reduceIte]
+   · simp
+     rw[]
+   · simp
