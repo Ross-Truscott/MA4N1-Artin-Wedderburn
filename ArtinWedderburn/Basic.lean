@@ -88,8 +88,8 @@ def NEndEquivMatrixEnd
     rw [Finset.sum_eq_single a]
     · simp
     · simp
-      intro c can
-      rw [if_neg can, Pi.single_zero, map_zero, Pi.zero_apply]
+      intro c cna
+      rw [if_neg cna, Pi.single_zero, map_zero, Pi.zero_apply]
     · simp
 
 
@@ -97,7 +97,6 @@ def NEndEquivMatrixEnd
    intro M
    ext a b c
    simp [Pi.single_apply]
-   -- Cleans up the code to be comprehensible, and gets the projection into a workable form
    rw [Finset.sum_eq_single b]
    · simp only [↓reduceIte]
    · simp
