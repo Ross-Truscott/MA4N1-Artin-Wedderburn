@@ -84,15 +84,24 @@ def NEndEquivMatrixEnd
   left_inv := by
     intro F
     ext a b
-    simp
-    sorry
+    simp [Pi.single_apply]
+    rw [Finset.sum_eq_single a]
+    · simp
+    · simp
+      intro c can
+      rw [if_neg can, Pi.single_zero, map_zero, Pi.zero_apply]
+    · simp
+
 
   right_inv := by
    intro M
    ext a b c
    simp [Pi.single_apply]
+   -- Cleans up the code to be comprehensible, and gets the projection into a workable form
    rw [Finset.sum_eq_single b]
    · simp only [↓reduceIte]
    · simp
-     rw[]
+     intro d dnb
+     rw [if_neg dnb]
+     exact LinearMap.map_zero (M a d)
    · simp
