@@ -5,8 +5,11 @@ import Mathlib.Data.Matrix.Basic
 import Mathlib.Algebra.Ring.Equiv
 import Mathlib.Algebra.DirectSum.Module
 import Mathlib.RingTheory.SimpleModule.Basic
+-- Remove SimpleModule.Basic later when I work out how to bring just the defintions
+import Mathlib.Algebra.Ring.Subring.Basic
+import Mathlib.RingTheory.Ideal.Quotient.Basic
 
-namespace kernel_result
+namespace first_iso
 
 -- Define two rings and a ring homomorphism between them.
 variable {R : Type*} [Ring R]
@@ -36,8 +39,13 @@ theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
   simp at *
   rw [hx, mul_zero]
 
-end kernel_result
+-- Statement of the first isomorphism theorem for rings.
+theorem first_iso_thm : Nonempty (f.range ≃+* R ⧸ RingHom.ker f) := by
+  sorry
 
+end first_iso
+
+namespace Lemma2
 /-
 This is the Proof of Lemma 2 from the outline, which states:
 
