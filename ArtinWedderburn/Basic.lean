@@ -9,7 +9,7 @@ import Mathlib.RingTheory.SimpleModule.Basic
 import Mathlib.Algebra.Ring.Subring.Basic
 import Mathlib.RingTheory.Ideal.Quotient.Basic
 
-namespace first_iso
+namespace schur
 
 -- Define two rings and a ring homomorphism between them.
 variable {R : Type*} [Ring R]
@@ -43,7 +43,14 @@ theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
 theorem first_iso_thm : Nonempty (f.range ≃+* R ⧸ RingHom.ker f) := by
   sorry
 
-end first_iso
+-- Defines a simple R-module M
+variable {M : Type*} [AddCommGroup M] [Module R M]
+
+-- Statement of Schur's lemma.
+theorem schur [IsSimpleModule R M] : Nonempty (DivisionRing (Module.End R M)) := by
+  sorry
+
+end schur
 
 namespace Lemma2
 /-
