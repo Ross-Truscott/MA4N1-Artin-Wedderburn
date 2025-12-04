@@ -39,6 +39,18 @@ theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
   simp at *
   rw [hx, mul_zero]
 
+def congruence : RingCon R where
+  r x y := f x = f y
+  add' := by
+    sorry
+  mul' := by
+    sorry
+  iseqv := by
+    sorry
+
+-- def map : Quotient (congruence f) →+* S :=
+  -- RingCon.lift (congruence f) f (fun x y h => h)
+
 -- Statement of the first isomorphism theorem for rings.
 theorem first_iso_thm : Nonempty (f.range ≃+* R ⧸ RingHom.ker f) := by
   sorry
