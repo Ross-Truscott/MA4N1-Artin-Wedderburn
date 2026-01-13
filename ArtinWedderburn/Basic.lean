@@ -22,22 +22,24 @@ def ideal (S : Set R) : Prop :=
   (∀ x, x ∈ S → -x ∈ S) ∧
   (∀ x r, x ∈ S → r * x ∈ S)
 
--- Statement of the theorem that the kernel of a ring homomorphism is an ideal.
-theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
-  constructor
-  · simp
+-- Statement and proof of the theorem that the kernel of a ring homomorphism is an ideal.
+theorem ker_hom_is_ideal :
+  ideal {r : R | f r = 0} :=
+  by
+    constructor
+    · simp
 
-  constructor
-  · intro x y hx hy
+    constructor
+    · intro x y hx hy
+      simp at *
+      rw [hx, hy, zero_add]
+
+    constructor
+    · simp
+
+    intro x r hx
     simp at *
-    rw [hx, hy, zero_add]
-
-  constructor
-  · simp
-
-  intro x r hx
-  simp at *
-  rw [hx, mul_zero]
+    rw [hx, mul_zero]
 
 def congruence : RingCon R where
   r x y := f x = f y
@@ -52,15 +54,19 @@ def congruence : RingCon R where
   -- RingCon.lift (congruence f) f (fun x y h => h)
 
 -- Statement of the first isomorphism theorem for rings.
-theorem first_iso_thm : Nonempty (f.range ≃+* R ⧸ RingHom.ker f) := by
-  sorry
+theorem first_iso_thm :
+  Nonempty (f.range ≃+* R ⧸ RingHom.ker f) :=
+  by
+    sorry
 
 -- Defines a simple R-module M
 variable {M : Type*} [AddCommGroup M] [Module R M]
 
 -- Statement of Schur's lemma.
-theorem schur [IsSimpleModule R M] : Nonempty (DivisionRing (Module.End R M)) := by
-  sorry
+theorem schur [IsSimpleModule R M] :
+  Nonempty (DivisionRing (Module.End R M)) :=
+  by
+    sorry
 
 end schur
 
