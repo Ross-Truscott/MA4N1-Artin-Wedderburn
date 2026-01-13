@@ -5,8 +5,11 @@ import Mathlib.Data.Matrix.Basic
 import Mathlib.Algebra.Ring.Equiv
 import Mathlib.Algebra.DirectSum.Module
 import Mathlib.RingTheory.SimpleModule.Basic
+-- Remove SimpleModule.Basic later when I work out how to bring just the defintions
+import Mathlib.Algebra.Ring.Subring.Basic
+import Mathlib.RingTheory.Ideal.Quotient.Basic
 
-namespace kernel_result
+namespace schur
 
 -- Define two rings and a ring homomorphism between them.
 variable {R : Type*} [Ring R]
@@ -19,25 +22,55 @@ def ideal (S : Set R) : Prop :=
   (∀ x, x ∈ S → -x ∈ S) ∧
   (∀ x r, x ∈ S → r * x ∈ S)
 
--- Statement of the theorem that the kernel of a ring homomorphism is an ideal.
-theorem ker_hom_is_ideal : ideal {r : R | f r = 0} := by
-  constructor
-  · simp
+-- Statement and proof of the theorem that the kernel of a ring homomorphism is an ideal.
+theorem ker_hom_is_ideal :
+  ideal {r : R | f r = 0} :=
+  by
+    constructor
+    · simp
 
-  constructor
-  · intro x y hx hy
+    constructor
+    · intro x y hx hy
+      simp at *
+      rw [hx, hy, zero_add]
+
+    constructor
+    · simp
+
+    intro x r hx
     simp at *
-    rw [hx, hy, zero_add]
+    rw [hx, mul_zero]
 
-  constructor
-  · simp
+def congruence : RingCon R where
+  r x y := f x = f y
+  add' := by
+    sorry
+  mul' := by
+    sorry
+  iseqv := by
+    sorry
 
-  intro x r hx
-  simp at *
-  rw [hx, mul_zero]
+-- def map : Quotient (congruence f) →+* S :=
+  -- RingCon.lift (congruence f) f (fun x y h => h)
 
-end kernel_result
+-- Statement of the first isomorphism theorem for rings.
+theorem first_iso_thm :
+  Nonempty (f.range ≃+* R ⧸ RingHom.ker f) :=
+  by
+    sorry
 
+-- Defines a simple R-module M
+variable {M : Type*} [AddCommGroup M] [Module R M]
+
+-- Statement of Schur's lemma.
+theorem schur [IsSimpleModule R M] :
+  Nonempty (DivisionRing (Module.End R M)) :=
+  by
+    sorry
+
+end schur
+
+namespace Lemma2
 /-
 This is the Proof of Lemma 2 from the outline, which states:
 
