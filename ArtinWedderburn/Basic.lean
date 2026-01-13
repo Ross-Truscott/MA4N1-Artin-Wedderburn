@@ -137,3 +137,55 @@ def NEndEquivMatrixEnd
      rw [if_neg dnb]
      exact LinearMap.map_zero (M a d)
    · simp
+
+-- Use Equiv.toLinearEquiv? Not sure if needed, but it exists
+-- Probably more sensible to just use this in situ with Schurs in final proof
+
+/-
+This is a proof of lemma 4 from the outline, which states:
+For any (unital) ring R, End_R(R_R) ≅ R.
+That is, a ring is isomorphic to the endomorphism ring of itself viewed as a right module.
+The proof is simply to consider the map φ_r:R→End_R(R_R) by φ_r(s)=rs
+and go through the easy verification that it's bijective and a homomorphism.
+-/
+
+noncomputable def RightMulMap
+    (R : Type) [Ring R] :
+    R →+* Module.End R R :=
+    { toFun := fun s => { toFun := fun r => r*s
+                          map_add' := by
+                            intros x y
+                            rw[add_mul]
+                          map_smul' := by
+                            intros x y
+                            rw[smul_eq_mul, RingHom.id_apply, smul_eq_mul,mul_assoc]}
+      map_one' := by
+        ext
+        simp
+      map_mul' := by
+        intros x y
+        ext
+        simp
+        sorry
+-- Lean only does left modules, need to change this all to R^op
+      map_zero' := by
+        ext
+        simp
+      map_add' := by
+        intros x y
+        ext
+        simp}
+
+--`Proof' that homomorphism + bijective = isomorphism
+noncomputable def ringEquivEnd
+    (R : Type) [Ring R] :
+    R ≃+* Module.End R R :=
+RingEquiv.ofBijective (RightMulMap R)
+  ⟨-- injective
+    by
+      sorry
+    -- surjective
+    ,
+    by
+    sorry
+  ⟩
