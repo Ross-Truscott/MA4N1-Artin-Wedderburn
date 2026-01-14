@@ -8,6 +8,7 @@ import Mathlib.RingTheory.SimpleModule.Basic
 -- Remove SimpleModule.Basic later when I work out how to bring just the defintions
 import Mathlib.Algebra.Ring.Subring.Basic
 import Mathlib.RingTheory.Ideal.Quotient.Basic
+import Mathlib.Algebra.Ring.Opposite
 
 namespace schur
 
@@ -143,49 +144,63 @@ def NEndEquivMatrixEnd
 
 /-
 This is a proof of lemma 4 from the outline, which states:
-For any (unital) ring R, End_R(R_R) ≅ R.
+For any (unital) ring R, End_R(R) ≅ R.
 That is, a ring is isomorphic to the endomorphism ring of itself viewed as a right module.
-The proof is simply to consider the map φ_r:R→End_R(R_R) by φ_r(s)=rs
+The proof is simply to consider the map φ_r:R→End_R(R) by φ_r(s)=rs
 and go through the easy verification that it's bijective and a homomorphism.
+
+Technically we prove that End_R(R) ≅ Rᵒᵖ as lean works with left modules.
+These statements are dual to each other however, right R modules are left R^op modules.
+This means we actually aim to prove R≅M_n(D)ᵒᵖ in the end.
 -/
 
-noncomputable def RightMulMap
+noncomputable def RopToEndRMap
     (R : Type) [Ring R] :
-    R →+* Module.End R R :=
-    { toFun := fun s => { toFun := fun r => r*s
-                          map_add' := by
-                            intros x y
-                            rw[add_mul]
-                          map_smul' := by
-                            intros x y
-                            rw[smul_eq_mul, RingHom.id_apply, smul_eq_mul,mul_assoc]}
-      map_one' := by
-        ext
-        simp
-      map_mul' := by
-        intros x y
-        ext
-        simp
-        sorry
--- Lean only does left modules, need to change this all to R^op
-      map_zero' := by
-        ext
-        simp
-      map_add' := by
-        intros x y
-        ext
-        simp}
+    Rᵐᵒᵖ →+* Module.End R R :=
+{ toFun := fun s =>
+  { toFun := fun r => r * s.unop
+    map_add' := by
+      intros x y
+      apply right_distrib
+    map_smul' := by
+      intros a r
+      rw [RingHom.id_apply,smul_mul_assoc]
+  }
+  map_one' := by
+    ext
+    simp
+  map_mul' := by
+    intros x y
+    ext
+    simp
+  map_zero' := by
+    ext
+    simp
+  map_add' := by
+    intros x y
+    ext
+    simp
+}
 
 --`Proof' that homomorphism + bijective = isomorphism
 noncomputable def ringEquivEnd
     (R : Type) [Ring R] :
-    R ≃+* Module.End R R :=
-RingEquiv.ofBijective (RightMulMap R)
-  ⟨-- injective
-    by
-      sorry
-    -- surjective
-    ,
-    by
-    sorry
-  ⟩
+    Rᵐᵒᵖ ≃+* Module.End R R :=
+    RingEquiv.ofBijective (RopToEndRMap R)
+    ⟨-- injective
+      by
+      intros x y h
+      have h1 := LinearMap.congr_fun h 1
+      dsimp [RopToEndRMap] at h1
+      repeat rw [one_mul] at h1
+      exact MulOpposite.unop_injective h1
+      -- surjective
+      ,
+      by
+        intro f
+        use MulOpposite.op (f 1)
+        apply LinearMap.ext
+        intro r
+        dsimp [RopToEndRMap]
+        rw [← smul_eq_mul, ← LinearMap.map_smul, smul_eq_mul, mul_one]
+    ⟩
