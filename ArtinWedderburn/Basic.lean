@@ -9,6 +9,7 @@ import Mathlib.RingTheory.SimpleModule.Basic
 import Mathlib.Algebra.Ring.Subring.Basic
 import Mathlib.RingTheory.Ideal.Quotient.Basic
 import Mathlib.Algebra.Ring.Opposite
+import Mathlib.RingTheory.Artinian.Module
 
 namespace schur
 
@@ -204,3 +205,16 @@ noncomputable def ringEquivEnd
         dsimp [RopToEndRMap]
         rw [← smul_eq_mul, ← LinearMap.map_smul, smul_eq_mul, mul_one]
     ⟩
+
+end Lemma2
+
+namespace main
+
+variable {R : Type*} [Ring R] [IsSemisimpleRing R] [IsArtinianRing R]
+
+theorem artin_wedderburn :
+  True :=
+  by
+    sorry
+
+end main
