@@ -65,7 +65,7 @@ theorem first_iso_thm :
 variable {M : Type*} [AddCommGroup M] [Module R M]
 
 -- Statement of Schur's lemma.
-theorem schur [IsSimpleModule R M] :
+theorem schurs [IsSimpleModule R M] :
   Nonempty (DivisionRing (Module.End R M)) :=
   by
     sorry
@@ -208,13 +208,19 @@ noncomputable def ringEquivEnd
 
 end Lemma2
 
-namespace main
+namespace main_result
 
 variable {R : Type*} [Ring R] [IsSemisimpleRing R] [IsArtinianRing R]
 
+/-
+The below statement MUST be checked and probably corrected in due course.
+Merely pushing as a first attempt and placeholder.
+-/
+
 theorem artin_wedderburn :
-  True :=
+  ∃ (ι : ℕ) (n : Fin ι → ℕ) (D : Fin ι → Type*) (_ : ∀ i, DivisionRing (D i)),
+  Nonempty (R ≃+* Π (i : Fin ι), Matrix (Fin (n i)) (Fin (n i)) (D i)) :=
   by
     sorry
 
-end main
+end main_result
