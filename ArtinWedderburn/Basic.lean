@@ -43,14 +43,30 @@ theorem ker_hom_is_ideal :
     simp at *
     rw [hx, mul_zero]
 
+
 def congruence : RingCon R where
   r x y := f x = f y
   add' := by
-    sorry
+    intro w x y z h1 h2
+    simp [map_add]
+    rw [h1, h2]
+
   mul' := by
-    sorry
+    intro w x y z h1 h2
+    simp [map_mul]
+    rw [h1, h2]
+
   iseqv := by
-    sorry
+    constructor
+    · intro x
+      rfl
+
+    · intro x y h
+      simp [h.symm]
+
+    · intro x y z h1 h2
+      rw [h1, h2]
+
 
 -- def map : Quotient (congruence f) →+* S :=
   -- RingCon.lift (congruence f) f (fun x y h => h)
