@@ -126,8 +126,8 @@ theorem first_iso_thm :
 variable {M : Type*} [AddCommGroup M] [Module R M]
 
 -- Statement of Schur's lemma.
-theorem schurs [IsSimpleModule R M] :
-  Nonempty (DivisionRing (Module.End R M)) :=
+theorem schurs [IsSimpleModule R M] (phi : Module.End R M) (h0 : phi ≠ 0):
+  Function.Bijective phi :=
   by
     sorry
 
