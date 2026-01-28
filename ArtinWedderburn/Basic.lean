@@ -104,7 +104,23 @@ def hom : (congruence f).Quotient →+* f.range where
 theorem first_iso_thm :
   Nonempty ((congruence f).Quotient ≃+* f.range) :=
   by
-    sorry
+
+    have bijection : Function.Bijective (hom f) :=
+    by
+      constructor
+      · intro x y
+        refine Quotient.inductionOn x (fun x ↦ ?_)
+        refine Quotient.inductionOn y (fun y ↦ ?_)
+        intro h
+        apply Quotient.sound
+        exact congr_arg Subtype.val h
+
+      · intro y
+        rcases y with ⟨_, ⟨r, rfl⟩⟩
+        exists Quotient.mk (congruence f).toSetoid r
+
+    exact Nonempty.intro (RingEquiv.ofBijective (hom f) bijection)
+
 
 -- Defines a simple R-module M
 variable {M : Type*} [AddCommGroup M] [Module R M]
