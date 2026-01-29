@@ -68,21 +68,66 @@ def congruence : RingCon R where
       rw [h1, h2]
 
 
--- def map : Quotient (congruence f) →+* S :=
-  -- RingCon.lift (congruence f) f (fun x y h => h)
+def hom : (congruence f).Quotient →+* f.range where
+  toFun := Quotient.lift
+    (f.codRestrict f.range Set.mem_range_self)
+    (fun x y h => Subtype.eq h)
+
+  map_zero' := by
+    apply Subtype.ext
+    change f 0 = 0
+    simp
+
+  map_one' := by
+    apply Subtype.ext
+    change f 1 = 1
+    simp
+
+  map_add' := by
+    intro x y
+    refine Quotient.inductionOn x (fun x ↦ ?_)
+    refine Quotient.inductionOn y (fun y ↦ ?_)
+    apply Subtype.ext
+    change f (x + y) = f x + f y
+    exact RingHom.map_add f x y
+
+  map_mul':= by
+    intro x y
+    refine Quotient.inductionOn x (fun x ↦ ?_)
+    refine Quotient.inductionOn y (fun y ↦ ?_)
+    apply Subtype.ext
+    change f (x * y) = f x * f y
+    exact RingHom.map_mul f x y
+
 
 -- Statement of the first isomorphism theorem for rings.
 theorem first_iso_thm :
-  Nonempty (f.range ≃+* R ⧸ RingHom.ker f) :=
+  Nonempty ((congruence f).Quotient ≃+* f.range) :=
   by
-    sorry
+
+    have bijection : Function.Bijective (hom f) :=
+    by
+      constructor
+      · intro x y
+        refine Quotient.inductionOn x (fun x ↦ ?_)
+        refine Quotient.inductionOn y (fun y ↦ ?_)
+        intro h
+        apply Quotient.sound
+        exact congr_arg Subtype.val h
+
+      · intro y
+        rcases y with ⟨_, ⟨r, rfl⟩⟩
+        exists Quotient.mk (congruence f).toSetoid r
+
+    exact Nonempty.intro (RingEquiv.ofBijective (hom f) bijection)
+
 
 -- Defines a simple R-module M
 variable {M : Type*} [AddCommGroup M] [Module R M]
 
 -- Statement of Schur's lemma.
-theorem schurs [IsSimpleModule R M] :
-  Nonempty (DivisionRing (Module.End R M)) :=
+theorem schurs [IsSimpleModule R M] (phi : Module.End R M) (h0 : phi ≠ 0) :
+  Function.Bijective phi :=
   by
     sorry
 
