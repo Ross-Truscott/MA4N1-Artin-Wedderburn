@@ -10,6 +10,8 @@ import Mathlib.Algebra.Ring.Subring.Basic
 import Mathlib.RingTheory.Ideal.Quotient.Basic
 import Mathlib.Algebra.Ring.Opposite
 import Mathlib.RingTheory.Artinian.Module
+import Mathlib.Algebra.DirectSum.Decomposition
+import Mathlib.Algebra.Module.Submodule.Lattice
 
 namespace schur
 
@@ -268,6 +270,61 @@ noncomputable def ringEquivEnd
     ⟩
 
 end Lemma2
+
+open scoped BigOperators
+
+namespace Lemma3
+
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [DecidableEq ι]
+
+/--
+Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
+We are about to prove a semi simple ring is an internal direct sum of finitely many of its minimal left ideals.
+Assume `R = ⨁ i, I i` as an internal direct sum of left ideals (`Submodule R R`).
+Decompose `1` in the direct sum; this has finite support `s`.
+Then `1 ∈ ⨆ i ∈ s, I i`, hence this finite supremum is a left ideal containing `1`,
+so it must be `⊤` (the whole module).
+-/
+
+theorem exists_finset_iSup_eq_top_of_isInternal
+    (I : ι → Submodule R R) (hI : DirectSum.IsInternal I) :
+    ∃ s : Finset ι, (⨆ i ∈ s, I i) = (⊤ : Submodule R R) := by
+  classical
+  -- Turn the `IsInternal` proof into a decomposition, so we can talk about components.
+  letI : DirectSum.Decomposition I := DirectSum.IsInternal.chooseDecomposition I hI
+
+  -- Let `s` be the (finite) support of the decomposition of `1`.
+  let s : Finset ι := DFinsupp.support ((DirectSum.decompose I) (1 : R))
+  refine ⟨s, ?_⟩
+
+  -- The finite supremum over `s` is a left ideal containing `1`, hence it is `⊤`.
+  refine top_unique ?_
+  intro r _
+
+  have one_mem : (1 : R) ∈ (⨆ i ∈ s, I i) := by
+    -- Each summand lies in the corresponding `I i`,
+    -- so the finite sum lies in the finite supremum.
+    have hsum_mem :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) ∈ (⨆ i ∈ s, I i) := by
+      refine
+        Submodule.sum_mem_biSup (s := s)
+          (f := fun i => (((DirectSum.decompose I) (1 : R)) i : R)) (p := I) ?_
+      intro i hi
+      exact (((DirectSum.decompose I) (1 : R)) i).property
+
+    -- And this sum is exactly `1` (the decomposition recomposes).
+    have hsum_eq :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) = (1 : R) := by
+      simpa [s] using (DirectSum.sum_support_decompose I (1 : R))
+
+    -- Therefore `1` belongs to the finite supremum.
+    simpa [hsum_eq] using hsum_mem
+
+  -- Now use the standard trick: if a left ideal contains `1`, it contains every `r = r • 1`.
+  simpa using ((⨆ i ∈ s, I i).smul_mem r one_mem)
+
+end Lemma3
 
 namespace main_result
 
