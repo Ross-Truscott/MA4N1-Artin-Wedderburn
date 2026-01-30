@@ -123,7 +123,6 @@ theorem first_iso_thm :
     exact Nonempty.intro (RingEquiv.ofBijective (hom f) bijection)
 
 
--- Defines a simple R-module M
 variable {R : Type*} [Ring R]
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
@@ -136,8 +135,8 @@ theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
 
 /-
 Proof that for disctinct simple modules S_i, End(⊕S_i) ≅ ⊕End(S_i).
-Note that in general we have End(M⊕N) = End(M)⊕End(N)⊕Hom(M,N)⊕Hom(N,M), hence
-we need to prove this, and that for simple modules Hom(M,N) = 0
+Note that in general we have End(⊕S_i) = ∏_{i,j}Hom(S_i,S_j), hence
+we need to prove this, and that for simple modules Hom(M,N) = 0.
 -/
 theorem Simple_Hom_Eq_Zero_If_Not_Iso
     {i j : ι} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
@@ -159,77 +158,8 @@ def inj (i : ι) : M i →ₗ[R] ((j : ι) → M j) :=
 def End_DirectSum_Equiv_DirectSum_End
     [∀ i, IsSimpleModule R (M i)]
     (h_pairwise : Pairwise (fun i j ↦ ¬ Nonempty (M i ≃ₗ[R] M j))) :
-    Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) where
-    toFun F i := (LinearMap.proj i).comp (F.comp (inj i))
-
-  -- Map a family (f_i)_i to the "diagonal" operator x ↦ (f_i x_i)_i
-    invFun f := LinearMap.pi (fun i ↦ (f i).comp (LinearMap.proj i))
-
-    left_inv f := by
-      ext i x
-      -- ((f_i ∘ π_i) ∘ ι_i) x = f_i (π_i (ι_i x)) = f_i x
-      simp
-      rw [@LinearMap.apply_single]
-      rw?
-
-    right_inv F := by
-      ext x i
-      simp only [LinearMap.comp_apply, LinearMap.pi_apply, LinearMap.proj_apply, inj, LinearMap.coe_mk, AddHom.coe_mk]
-      -- We need to show (F x)_i = (π_i ∘ F ∘ ι_i) (x_i).
-      -- Decompose x as ∑_j ι_j x_j.
-      -- (F x)_i = π_i (F (∑_j ι_j x_j)) = ∑_j π_i (F (ι_j x_j))
-      -- Terms where j ≠ i are zero because M_j ≄ M_i.
-      have h_sum : x = ∑ j, inj j (x j) := by
-        ext j
-        simp [inj, Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq]
-
-      conv_lhs => rw [h_sum, map_sum]
-      simp only [LinearMap.sum_apply, LinearMap.comp_apply, LinearMap.proj_apply]
-      rw [Finset.sum_eq_single i]
-      · rfl -- The j=i term matches the RHS
-      · intros j _ hij
-        -- For j ≠ i, the map M_j → M_i is zero.
-        let h : M j →ₗ[R] M i := (LinearMap.proj i).comp (F.comp (inj j))
-        have : h = 0 := Simple_Hom_Eq_Zero_If_Not_Iso (h_pairwise (Ne.symm hij)) h
-        calc (LinearMap.proj i) (F ((inj j) (x j)))
-          _ = h (x j) := rfl
-          _ = 0 := by rw [this, LinearMap.zero_apply]
-      · intro hi
-        exact (hi (Finset.mem_univ i)).elim
-
-    map_add' f g := by
-      ext
-      simp
-
-    map_mul' f g := by
-      ext i m
-      -- Check multiplication (composition) on component i.
-      -- LHS: (π_i ∘ (f ∘ g) ∘ ι_i) m
-      -- RHS: (π_i ∘ f ∘ ι_i) ((π_i ∘ g ∘ ι_i) m)
-      simp only [LinearMap.comp_apply, LinearMap.proj_apply, LinearMap.mul_apply, Pi.mul_apply]
-      -- Let v = g (ι_i m). We need π_i (f v) = π_i (f (ι_i (π_i v))).
-      -- Decompose v = ∑_j ι_j (π_j v).
-      -- π_i (f v) = ∑_j π_i (f (ι_j (π_j v))).
-      -- Terms j ≠ i vanish.
-      let v := g ((inj i) m)
-      have h_sum : v = ∑ j, inj j (v j) := by
-        ext j
-        simp [inj, Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq]
-
-      conv_lhs => rw [h_sum, map_sum]
-      simp only [LinearMap.sum_apply, LinearMap.proj_apply]
-      rw [Finset.sum_eq_single i]
-      · rfl
-      · intros j _ hij
-        let h : M j →ₗ[R] M i := (LinearMap.proj i).comp (f.comp (inj j))
-        have : h = 0 := Simple_Hom_Eq_Zero_If_Not_Iso (h_pairwise (Ne.symm hij)) h
-        rw [LinearMap.comp_apply, LinearMap.proj_apply] at this
-        calc (LinearMap.proj i) (f ((inj j) (v j)))
-          _ = h (v j) := rfl
-          _ = 0 := by rw [this, LinearMap.zero_apply]
-      · intro hi
-        exact (hi (Finset.mem_univ i)).elim
-
+    Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) := by
+      sorry
 
 end schur
 
