@@ -131,7 +131,10 @@ variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
 (phi : M i →ₗ[R] M j) (h0 : phi ≠ 0) : Function.Bijective phi :=
   by
-    sorry
+    constructor
+    · exact LinearMap.injective_of_ne_zero h0
+
+    · exact LinearMap.surjective_of_ne_zero h0
 
 /-
 Proof that for disctinct simple modules S_i, End(⊕S_i) ≅ ⊕End(S_i).
