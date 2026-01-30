@@ -327,6 +327,14 @@ noncomputable def ringEquivEnd
         rw [← smul_eq_mul, ← LinearMap.map_smul, smul_eq_mul, mul_one]
     ⟩
 
+/-
+This is a proof of lemma 5 from the outline, which states:
+For a semi-simple Artinian right R module (left R^op module) M,
+ End_R(M) ≅ ⊕ M_{a_i}(D_i)
+For a division rings D_i and non-negative integers a_i.
+The proof of this is essentially just colating all of the prior work.
+-/
+
 namespace main_result
 
 variable {R : Type*} [Ring R] [IsSemisimpleRing R] [IsArtinianRing R]
