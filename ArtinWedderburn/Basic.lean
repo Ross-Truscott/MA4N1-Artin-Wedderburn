@@ -124,10 +124,11 @@ theorem first_iso_thm :
 
 
 variable {R : Type*} [Ring R]
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {ι : Type*}
 variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
--- Statement of Schur's lemma.
+
+-- Statement and sharp proof of Schur's lemma.
 theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
 (phi : M i →ₗ[R] M j) (h0 : phi ≠ 0) : Function.Bijective phi :=
   by
@@ -135,6 +136,7 @@ theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
     · exact LinearMap.injective_of_ne_zero h0
 
     · exact LinearMap.surjective_of_ne_zero h0
+
 
 /-
 Proof that for disctinct simple modules S_i, End(⊕S_i) ≅ ⊕End(S_i).
@@ -151,6 +153,15 @@ theorem Simple_Hom_Eq_Zero_If_Not_Iso
     schurs (i := i) (j := j) f hf
     refine ⟨LinearEquiv.ofBijective f h'⟩
 
+
+end schur
+
+namespace temporary
+
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
+
 open scoped BigOperators
 
 def inj (i : ι) : M i →ₗ[R] ((j : ι) → M j) :=
@@ -164,7 +175,8 @@ def End_DirectSum_Equiv_DirectSum_End
     Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) := by
       sorry
 
-end schur
+
+end temporary
 
 namespace Lemma2
 /-
