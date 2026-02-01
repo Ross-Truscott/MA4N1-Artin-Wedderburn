@@ -137,43 +137,9 @@ theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
 
     · exact LinearMap.surjective_of_ne_zero h0
 
-
-/-
-Proof that for disctinct simple modules S_i, End(⊕S_i) ≅ ⊕End(S_i).
-Note that in general we have End(⊕S_i) = ∏_{i,j}Hom(S_i,S_j), hence
-we need to prove this, and that for simple modules Hom(M,N) = 0.
--/
-theorem Simple_Hom_Eq_Zero_If_Not_Iso
-    {i j : ι} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
-    (h_not_iso : ¬ Nonempty (M i ≃ₗ[R] M j)) (f : M i →ₗ[R] M j) : f = 0 := by
-    classical
-    by_contra hf
-    apply h_not_iso
-    have h' : Function.Bijective f :=
-    schurs (i := i) (j := j) f hf
-    refine ⟨LinearEquiv.ofBijective f h'⟩
-
-
 end schur
 
 namespace temporary
-
-variable {R : Type*} [Ring R]
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
-
-open scoped BigOperators
-
-def inj (i : ι) : M i →ₗ[R] ((j : ι) → M j) :=
-  { toFun := fun m ↦ Pi.single i m
-    map_add' := fun x y ↦ by simp [Pi.single_add]
-    map_smul' := fun r x ↦ by simp [Pi.single_smul] }
-
-def End_DirectSum_Equiv_DirectSum_End
-    [∀ i, IsSimpleModule R (M i)]
-    (h_pairwise : Pairwise (fun i j ↦ ¬ Nonempty (M i ≃ₗ[R] M j))) :
-    Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) := by
-      sorry
 
 
 end temporary
@@ -239,7 +205,7 @@ def NEndEquivMatrixEnd
    ext a b c
    simp [Pi.single_apply]
    rw [Finset.sum_eq_single b]
-   · simp only [↓reduceIte]
+   · simp
    · simp
      intro d dnb
      rw [if_neg dnb]
@@ -319,7 +285,7 @@ These statements are dual to each other however, right R modules are left R^op m
 This means we actually aim to prove R≅M_n(D)ᵒᵖ in the end.
 -/
 
-noncomputable def RopToEndRMap
+def RopToEndRMap
     (R : Type) [Ring R] :
     Rᵐᵒᵖ →+* Module.End R R :=
 { toFun := fun s =>
@@ -331,7 +297,7 @@ noncomputable def RopToEndRMap
       intros a r
       rw [RingHom.id_apply,smul_mul_assoc]
   }
-  --Homomorphism
+  --Homomorphism proof, these are trivial but messy hence the simps.
   map_one' := by
     ext
     simp
@@ -348,7 +314,7 @@ noncomputable def RopToEndRMap
     simp
 }
 
---`Proof' that homomorphism + bijective = isomorphism
+-- Homomorphism + bijective = isomorphism
 noncomputable def RingEquivEnd
     (R : Type) [Ring R] :
     Rᵐᵒᵖ ≃+* Module.End R R :=
@@ -371,6 +337,134 @@ noncomputable def RingEquivEnd
         rw [← smul_eq_mul, ← LinearMap.map_smul, smul_eq_mul, mul_one]
     ⟩
 
+
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
+
+/-
+Proof that for disctinct simple modules S_i, End(⊕S_i) ≅ ⊕End(S_i).
+
+We note that lemma 2, and this result, are special cases of the more general forumla
+End(⊕M_i) = ⊕_i⊕_jHom(M_i,M_j) for some modules M_i. Note that this is a big matrix.
+Thus, to prove this we need to show that for simple modules M,N, Hom(M,N) = 0,
+that is, the big matrix is diagonal. Since lemma 2 is a special case, the proof goes similarly.
+-/
+
+--Basically just schurs lemma, if a map between simple modules isnt an iso, its 0.
+theorem Simple_Hom_Eq_Zero_If_Not_Iso
+    {i j : ι} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
+    (h_not_iso : ¬ Nonempty (M i ≃ₗ[R] M j)) (f : M i →ₗ[R] M j) : f = 0 := by
+    classical
+    by_contra hf
+    apply h_not_iso
+    have h' : Function.Bijective f :=
+    schur.schurs (i := i) (j := j) f hf
+    refine ⟨LinearEquiv.ofBijective f h'⟩
+
+open scoped BigOperators
+--Same basic idea as lemma 2
+def End_DirectSum_Equiv_DirectSum_End
+    [∀ i, IsSimpleModule R (M i)]
+    (h_pairwise : Pairwise (fun i j ↦ ¬ Nonempty (M i ≃ₗ[R] M j))) :
+    Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) where
+      --Defines Functions
+      toFun F i := {
+        toFun := fun m ↦ (F (Pi.single i m)) i
+        map_add' := by
+          intros x y
+          rw [Pi.single_add, LinearMap.map_add,Pi.add_apply]
+        map_smul' := by
+          intros m x
+          simp
+          rw [Pi.single_smul, LinearMap.map_smul_of_tower, Pi.smul_apply]
+    }
+      invFun f := {
+        toFun := fun v i ↦ f i (v i)
+        map_add' := by
+          intros x y
+          ext i
+          rw [Pi.add_apply,Pi.add_apply, LinearMap.map_add]
+        map_smul' := by
+          intros m x
+          ext i
+          rw [Pi.smul_apply, map_smul, RingHom.id_apply, Pi.smul_apply]
+      }
+
+    --Proof it's linear
+      map_add' := by
+        intros x y
+        ext i j
+        simp
+
+-- I think this looks dense but its basically just showing the product of diagonal matrices is diag.
+      map_mul' := by
+        intros F G
+        ext i m
+        simp
+        let v := G (Pi.single i m)
+        have h_off_diag : ∀ j, i ≠ j → v j = 0 := by
+          intros j hij
+          let f : M i →ₗ[R] M j := { -- This reads out the j-th component of the image under G
+            toFun := fun x ↦ (G (Pi.single i x)) j
+            map_add' := by
+              intros x y
+              rw [Pi.single_add, map_add, Pi.add_apply]
+            map_smul' := by
+              intros m x
+              rw [RingHom.id_apply, Pi.single_smul, LinearMap.map_smul_of_tower, Pi.smul_apply]
+          }
+          --This shows the j-th component from the above is 0, which is by schurs
+          have : f = 0 := Simple_Hom_Eq_Zero_If_Not_Iso (h_pairwise hij) f
+          exact LinearMap.congr_fun this m
+
+        have hv_eq : v = Pi.single i (v i) := by
+          ext j
+          by_cases h : i = j
+          · rw [h, Pi.single_eq_same]
+          · rw [h_off_diag j h, Pi.single_eq_of_ne (Ne.symm h)]
+        rw [← hv_eq]
+
+      --Proof they're inverse
+      right_inv := by
+        intro f
+        ext i m
+        simp
+
+--As with map_mul, this looks quite dense but is fine, we just need to define a map
+--so that we can apply schurs lemma to say the off diagonals are 0
+      left_inv := by
+        intro F
+        apply LinearMap.ext
+        intro v
+        ext k
+        simp
+        have h_sum_v : v = ∑ j, Pi.single j (v j) := by
+          ext i
+          rw [Finset.sum_apply]
+          simp
+        conv_rhs => rw [h_sum_v, map_sum, Finset.sum_apply]
+        rw [Finset.sum_eq_single k]
+        · intros j _ hjk -- We are showing that if j≠k, that term of the sum is 0
+          let f_jk : M j →ₗ[R] M k := {
+            toFun := fun m ↦ (F (Pi.single j m)) k
+            map_add' := by
+              intros x y
+              rw [Pi.single_add, LinearMap.map_add, Pi.add_apply]
+            map_smul' := by
+              intros m x
+              rw [RingHom.id_apply, Pi.single_smul, LinearMap.map_smul_of_tower, Pi.smul_apply]
+          }
+          have h_zero := Simple_Hom_Eq_Zero_If_Not_Iso (h_pairwise hjk) f_jk
+          exact LinearMap.congr_fun h_zero (v j)
+        · intro hk
+          exact (hk (Finset.mem_univ _)).elim
+
+
+namespace main_result
+
+variable {R : Type*} [Ring R] [IsSemisimpleRing R] [IsArtinianRing R]
+
 /-
 This is a proof of lemma 5 from the outline, which states:
 For a semi-simple Artinian right R module (left R^op module) M,
@@ -380,14 +474,13 @@ The proof of this is essentially just colating all of the prior work.
 -/
 
 
-namespace main_result
-
-variable {R : Type*} [Ring R] [IsSemisimpleRing R] [IsArtinianRing R]
 
 /-
 The below statement MUST be checked and probably corrected in due course.
 Merely pushing as a first attempt and placeholder.
 -/
+
+
 
 theorem artin_wedderburn :
   ∃ (ι : ℕ) (n : Fin ι → ℕ) (D : Fin ι → Type*) (_ : ∀ i, DivisionRing (D i)),
