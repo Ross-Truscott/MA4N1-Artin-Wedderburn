@@ -123,18 +123,15 @@ theorem first_iso_thm :
     exact Nonempty.intro (RingEquiv.ofBijective (hom f) bijection)
 
 
-variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
-
--- Statement of the first isomorphism theorem for modules.
-noncomputable def first_iso_thm_modules (f : M →ₗ[R] M) :
-  (M ⧸ LinearMap.ker f) ≃ₗ[R] LinearMap.range f :=
-  by
-    sorry
-
-
 variable {R : Type*} [Ring R]
 variable {ι : Type*}
 variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
+
+-- Statement of the first isomorphism theorem for modules.
+noncomputable def first_iso_thm_modules {i j} (f : M i →ₗ[R] M j) :
+  (M i ⧸ LinearMap.ker f) ≃ₗ[R] LinearMap.range f :=
+  by
+    sorry
 
 
 -- Statement and sharp proof of Schur's lemma.
