@@ -134,7 +134,22 @@ variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 noncomputable def first_iso_thm_modules {i j} (f : M i →ₗ[R] M j) :
   (M i ⧸ LinearMap.ker f) ≃ₗ[R] LinearMap.range f :=
   by
-    sorry
+    let f_restricted : M i →ₗ[R] LinearMap.range f := f.rangeRestrict
+
+    let f_lifted : (M i ⧸ LinearMap.ker f) →ₗ[R] LinearMap.range f :=
+    Submodule.liftQ (LinearMap.ker f) f_restricted (by rw [LinearMap.ker_rangeRestrict])
+
+    apply LinearEquiv.ofBijective f_lifted
+
+    constructor
+    · rw [← LinearMap.ker_eq_bot]
+      rw [Submodule.ker_liftQ]
+      rw [LinearMap.ker_rangeRestrict]
+      exact Submodule.mkQ_map_self (LinearMap.ker f)
+
+    · rw [← LinearMap.range_eq_top]
+      rw [Submodule.range_liftQ]
+      exact LinearMap.range_rangeRestrict f
 
 
 -- Statement and proof of Schur's lemma.
