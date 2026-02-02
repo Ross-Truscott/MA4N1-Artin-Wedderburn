@@ -11,6 +11,9 @@ import Mathlib.Algebra.Ring.Opposite
 import Mathlib.RingTheory.Artinian.Module
 import Mathlib.Algebra.DirectSum.Decomposition
 import Mathlib.Algebra.Module.Submodule.Lattice
+import Mathlib.Algebra.Module.Submodule.Basic
+import Mathlib.Order.Atoms
+
 
 namespace schur
 
@@ -134,14 +137,42 @@ noncomputable def first_iso_thm_modules {i j} (f : M i →ₗ[R] M j) :
     sorry
 
 
--- Statement and sharp proof of Schur's lemma.
+-- Statement and proof of Schur's lemma.
 theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
-(phi : M i →ₗ[R] M j) (h0 : phi ≠ 0) : Function.Bijective phi :=
+  (phi : M i →ₗ[R] M j) (h0 : phi ≠ 0) : Function.Bijective phi :=
   by
-    constructor
-    · exact LinearMap.injective_of_ne_zero h0
+    have ker_eq_bot : LinearMap.ker phi = ⊥ := by
 
-    · exact LinearMap.surjective_of_ne_zero h0
+      rcases eq_bot_or_eq_top (LinearMap.ker phi) with h_bot | h_top
+      · exact h_bot
+
+      · have : phi = 0 := LinearMap.ker_eq_top.mp h_top
+        contradiction
+
+    have range_eq_top : LinearMap.range phi = ⊤ := by
+
+      let induced_phi := first_iso_thm_modules phi
+
+      let type_fix := Submodule.quotEquivOfEqBot (LinearMap.ker phi) ker_eq_bot
+
+      let cleaner_iso : M i ≃ₗ[R] LinearMap.range phi := type_fix.symm.trans induced_phi
+
+      -- Proof by contradiction.
+      have range_neq_bot : LinearMap.range phi ≠ ⊥ := by
+        intro range_eq_bot
+
+        have : Subsingleton (M i) :=
+          @Function.Injective.subsingleton _ _ _
+          cleaner_iso.injective (Submodule.subsingleton_iff_eq_bot.mpr range_eq_bot)
+
+        exact @not_subsingleton _ (IsSimpleModule.nontrivial R (M i)) this
+
+      rcases eq_bot_or_eq_top (LinearMap.range phi) with eq_bot | eq_top
+      · exact False.elim (range_neq_bot eq_bot)
+
+      · exact eq_top
+
+    exact ⟨LinearMap.ker_eq_bot.mp ker_eq_bot, LinearMap.range_eq_top.mp range_eq_top⟩
 
 end schur
 
