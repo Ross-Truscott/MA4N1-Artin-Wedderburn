@@ -585,8 +585,12 @@ Artin-Wedderburn Theorem
 -/
 
 
-theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleRing R] :
-  ∃ (ι : ℕ) (n : Fin ι → ℕ) (D : Fin ι → Type u) (_ : ∀ i, DivisionRing (D i)),
+
+theorem artin_wedderburn :
+  ∃ (ι : ℕ)
+    (n : Fin ι → ℕ)
+    (D : Fin ι → Type*)
+    (_ : ∀ i, DivisionRing (D i)),
   (∀ i, n i > 0) ∧ Nonempty (R ≃+* Π (i : Fin ι), Matrix (Fin (n i)) (Fin (n i)) (D i)) :=
   by
     obtain ⟨m_raw, (D_raw : Fin m_raw → Type u), h_div_raw, n_raw, ⟨iso_end⟩⟩ :=
