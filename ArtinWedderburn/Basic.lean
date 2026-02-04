@@ -918,7 +918,11 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
             Matrix.of_add_of, EmbeddingLike.apply_eq_iff_eq]
           rfl,
 
-        map_mul' := by sorry
+        map_mul' := by
+          intro a b
+          ext i j
+          simp only [Matrix.mul_apply, MulOpposite.unop_mul, Matrix.of_apply,
+            Finset.op_sum, MulOpposite.op_mul]
       }
 
     let iso_pi_op :
