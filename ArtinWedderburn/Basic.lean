@@ -270,59 +270,6 @@ end Lemma2
 
 open scoped BigOperators
 
-namespace Lemma3
-
-variable {R : Type*} [Ring R]
-variable {ι : Type*} [DecidableEq ι]
-
-/--
-Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
-We are about to prove a semi simple ring is an internal direct sum of finitely many of its minimal left ideals.
-Assume `R = ⨁ i, I i` as an internal direct sum of left ideals (`Submodule R R`).
-Decompose `1` in the direct sum; this has finite support `s`.
-Then `1 ∈ ⨆ i ∈ s, I i`, hence this finite supremum is a left ideal containing `1`,
-so it must be `⊤` (the whole module).
--/
-
-theorem exists_finset_iSup_eq_top_of_isInternal
-    (I : ι → Submodule R R) (hI : DirectSum.IsInternal I) :
-    ∃ s : Finset ι, (⨆ i ∈ s, I i) = (⊤ : Submodule R R) := by
-  classical
-  -- Turn the `IsInternal` proof into a decomposition, so we can talk about components.
-  letI : DirectSum.Decomposition I := DirectSum.IsInternal.chooseDecomposition I hI
-
-  -- Let `s` be the (finite) support of the decomposition of `1`.
-  let s : Finset ι := DFinsupp.support ((DirectSum.decompose I) (1 : R))
-  refine ⟨s, ?_⟩
-
-  -- The finite supremum over `s` is a left ideal containing `1`, hence it is `⊤`.
-  refine top_unique ?_
-  intro r _
-
-  have one_mem : (1 : R) ∈ (⨆ i ∈ s, I i) := by
-    -- Each summand lies in the corresponding `I i`,
-    -- so the finite sum lies in the finite supremum.
-    have hsum_mem :
-        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) ∈ (⨆ i ∈ s, I i) := by
-      refine
-        Submodule.sum_mem_biSup (s := s)
-          (f := fun i => (((DirectSum.decompose I) (1 : R)) i : R)) (p := I) ?_
-      intro i hi
-      exact (((DirectSum.decompose I) (1 : R)) i).property
-
-    -- And this sum is exactly `1` (the decomposition recomposes).
-    have hsum_eq :
-        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) = (1 : R) := by
-      simpa [s] using (DirectSum.sum_support_decompose I (1 : R))
-
-    -- Therefore `1` belongs to the finite supremum.
-    simpa [hsum_eq] using hsum_mem
-
-  -- Now use the standard trick: if a left ideal contains `1`, it contains every `r = r • 1`.
-  simpa using ((⨆ i ∈ s, I i).smul_mem r one_mem)
-
-end Lemma3
-
 
 /-
 This is a proof of lemma 4 from the outline, which states:
@@ -388,11 +335,6 @@ noncomputable def RingEquivEnd
         rw [← smul_eq_mul, ← LinearMap.map_smul, smul_eq_mul, mul_one]
     ⟩
 
-
-variable {R : Type*} [Ring R]
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
-
 /-
 Proof that for disctinct modules S_i such that Hom(S_i,S_j) = 0 for i≠j, End(⊕S_i) ≅ ⊕End(S_i).
 
@@ -403,16 +345,9 @@ Thus, to prove this we need to show that for isotypic
 that is, the big matrix is diagonal. Since lemma 2 is a special case, the proof goes similarly.
 -/
 
---Basically just schurs lemma, if a map between simple modules isnt an iso, its 0.
-theorem Simple_Hom_Eq_Zero_If_Not_Iso
-    {i j : ι} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
-    (h_not_iso : ¬ Nonempty (M i ≃ₗ[R] M j)) (f : M i →ₗ[R] M j) : f = 0 := by
-    classical
-    by_contra hf
-    apply h_not_iso
-    have h' : Function.Bijective f :=
-    schur.schurs (i := i) (j := j) f hf
-    refine ⟨LinearEquiv.ofBijective f h'⟩
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
 --For the actual proof we need to first group our simple decompositon into isotypic modules,
 --that is, we define S_i ≅ I^{n_i}_i so that each S_i is pairwise non-isomorphic
@@ -992,3 +927,71 @@ theorem isotypic_orthogonality
     change f_component (vec j) = 0
     rw [h_map_is_zero]
     simp
+
+
+/- Lemma3-/
+
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [DecidableEq ι]
+
+/--
+Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
+We are about to prove a semi simple ring is an internal direct sum of finitely many of its minimal left ideals.
+Assume `R = ⨁ i, I i` as an internal direct sum of left ideals (`Submodule R R`).
+Decompose `1` in the direct sum; this has finite support `s`.
+Then `1 ∈ ⨆ i ∈ s, I i`, hence this finite supremum is a left ideal containing `1`,
+so it must be `⊤` (the whole module).
+-/
+
+theorem exists_finset_iSup_eq_top_of_isInternal
+    (I : ι → Submodule R R) (hI : DirectSum.IsInternal I) :
+    ∃ s : Finset ι, (⨆ i ∈ s, I i) = (⊤ : Submodule R R) := by
+  classical
+  -- Turn the `IsInternal` proof into a decomposition, so we can talk about components.
+  letI : DirectSum.Decomposition I := DirectSum.IsInternal.chooseDecomposition I hI
+
+  -- Let `s` be the (finite) support of the decomposition of `1`.
+  let s : Finset ι := DFinsupp.support ((DirectSum.decompose I) (1 : R))
+  refine ⟨s, ?_⟩
+
+  -- The finite supremum over `s` is a left ideal containing `1`, hence it is `⊤`.
+  refine top_unique ?_
+  intro r _
+
+  have one_mem : (1 : R) ∈ (⨆ i ∈ s, I i) := by
+    -- Each summand lies in the corresponding `I i`,
+    -- so the finite sum lies in the finite supremum.
+    have hsum_mem :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) ∈ (⨆ i ∈ s, I i) := by
+      refine
+        Submodule.sum_mem_biSup (s := s)
+          (f := fun i => (((DirectSum.decompose I) (1 : R)) i : R)) (p := I) ?_
+      intro i hi
+      exact (((DirectSum.decompose I) (1 : R)) i).property
+
+    -- And this sum is exactly `1` (the decomposition recomposes).
+    have hsum_eq :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) = (1 : R) := by
+      simpa [s] using (DirectSum.sum_support_decompose I (1 : R))
+
+    -- Therefore `1` belongs to the finite supremum.
+    simpa [hsum_eq] using hsum_mem
+
+  -- Now use the standard trick: if a left ideal contains `1`, it contains every `r = r • 1`.
+  simpa using ((⨆ i ∈ s, I i).smul_mem r one_mem)
+
+
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
+
+--Basically just schurs lemma, if a map between simple modules isnt an iso, its 0.
+theorem Simple_Hom_Eq_Zero_If_Not_Iso
+    {i j : ι} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
+    (h_not_iso : ¬ Nonempty (M i ≃ₗ[R] M j)) (f : M i →ₗ[R] M j) : f = 0 := by
+    classical
+    by_contra hf
+    apply h_not_iso
+    have h' : Function.Bijective f :=
+    schur.schurs (i := i) (j := j) f hf
+    refine ⟨LinearEquiv.ofBijective f h'⟩
