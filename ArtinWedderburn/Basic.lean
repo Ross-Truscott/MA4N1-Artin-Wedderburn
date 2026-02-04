@@ -14,7 +14,6 @@ import Mathlib.Algebra.Module.Submodule.Lattice
 import Mathlib.Algebra.Module.Submodule.Basic
 import Mathlib.Order.Atoms
 
-
 namespace schur
 
 -- Define two rings and a ring homomorphism between them.
@@ -395,11 +394,12 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
 /-
-Proof that for disctinct simple modules S_i, End(⊕S_i) ≅ ⊕End(S_i).
+Proof that for disctinct modules S_i such that Hom(S_i,S_j) = 0 for i≠j, End(⊕S_i) ≅ ⊕End(S_i).
 
 We note that lemma 2, and this result, are special cases of the more general forumla
 End(⊕M_i) = ⊕_i⊕_jHom(M_i,M_j) for some modules M_i. Note that this is a big matrix.
-Thus, to prove this we need to show that for simple modules M,N, Hom(M,N) = 0,
+Thus, to prove this we need to show that for isotypic
+(i.e. built out of copies of a single simple module) modules M,N, Hom(M,N) = 0,
 that is, the big matrix is diagonal. Since lemma 2 is a special case, the proof goes similarly.
 -/
 
@@ -414,18 +414,47 @@ theorem Simple_Hom_Eq_Zero_If_Not_Iso
     schur.schurs (i := i) (j := j) f hf
     refine ⟨LinearEquiv.ofBijective f h'⟩
 
+--For the actual proof we need to first group our simple decompositon into isotypic modules,
+--that is, we define S_i ≅ I^n_{n_i} so that each S_i is pairwise non-isomorphic
+--Hence we need to show that if Hom(M,N) = 0, so does Hom(M^m,N^n).
+
+theorem Isotypic_Hom_Eq_Zero
+  (n m : ℕ) (R : Type) [Ring R] (S T : Type)
+  [AddCommGroup S] [Module R S] [AddCommGroup T] [Module R T]
+  (h_not_iso: ∀ f : S →ₗ[R] T, f = 0) (f : (Fin n → S) →ₗ[R] (Fin m → T)) : f = 0 := by
+    apply LinearMap.ext
+    intro v
+    ext k
+    rw [← Finset.univ_sum_single v, map_sum]
+    simp
+    apply Finset.sum_eq_zero --Want to show each term is 0
+    intro j a
+    let component_map : S →ₗ[R] T := {
+      toFun := fun s => (f (Pi.single j s)) k -- this is the inclsion, map, projection
+      map_add' := by
+        intros x y
+        rw [Pi.single_add, map_add, Pi.add_apply]
+      map_smul' := by
+         intros r s
+         rw [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
+    }
+    have h_zero := h_not_iso component_map
+    change component_map (v j) = 0
+    rw [h_zero, LinearMap.zero_apply]
+
+
 open scoped BigOperators
---Same basic idea as lemma 2
+--Same basic idea as lemma 2, but now much generalised using the above theorem
+--we just consider the projections and inclusions in much the same way
 def End_DirectSum_Equiv_DirectSum_End
-    [∀ i, IsSimpleModule R (M i)]
-    (h_pairwise : Pairwise (fun i j ↦ ¬ Nonempty (M i ≃ₗ[R] M j))) :
+    (h_pairwise : Pairwise (fun i j ↦ ∀ f : M i →ₗ[R] M j, f = 0)) :
     Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) where
       --Defines Functions
       toFun F i := {
         toFun := fun m ↦ (F (Pi.single i m)) i
         map_add' := by
           intros x y
-          rw [Pi.single_add, LinearMap.map_add,Pi.add_apply]
+          rw [Pi.single_add, map_add, Pi.add_apply]
         map_smul' := by
           intros m x
           simp
@@ -467,7 +496,7 @@ def End_DirectSum_Equiv_DirectSum_End
               rw [RingHom.id_apply, Pi.single_smul, LinearMap.map_smul_of_tower, Pi.smul_apply]
           }
           --This shows the j-th component from the above is 0, which is by schurs
-          have : f = 0 := Simple_Hom_Eq_Zero_If_Not_Iso (h_pairwise hij) f
+          have : f = 0 :=  (h_pairwise hij) f
           exact LinearMap.congr_fun this m
 
         have hv_eq : v = Pi.single i (v i) := by
@@ -507,15 +536,13 @@ def End_DirectSum_Equiv_DirectSum_End
               intros m x
               rw [RingHom.id_apply, Pi.single_smul, LinearMap.map_smul_of_tower, Pi.smul_apply]
           }
-          have h_zero := Simple_Hom_Eq_Zero_If_Not_Iso (h_pairwise hjk) f_jk
+          have h_zero := (h_pairwise hjk) f_jk
           exact LinearMap.congr_fun h_zero (v j)
         · intro hk
           exact (hk (Finset.mem_univ _)).elim
 
 
 namespace main_result
-
-variable {R : Type*} [Ring R] [IsSemisimpleRing R] [IsArtinianRing R]
 
 /-
 This is a proof of lemma 5 from the outline, which states:
@@ -525,6 +552,13 @@ for a division rings D_i and non-negative integers a_i.
 The proof of this is essentially just colating all of the prior work.
 -/
 
+def End_SemisimpleM_Iso_Sum_Of_Matrices
+  (R : Type*) [Ring R]
+  (M : Type*) [AddCommGroup M] [Module Rᵐᵒᵖ M] [IsArtinian Rᵐᵒᵖ M] [IsSemisimpleModule Rᵐᵒᵖ M]
+  (ι : Type*) (S : ι → Type*) [∀ i, AddCommGroup (S i)] [∀ i, Module Rᵐᵒᵖ (S i)] (n : ι → ℕ) :
+  Module.End Rᵐᵒᵖ M ≃+* (∀ i : ι, Matrix (Fin (n i)) (Fin (n i)) (Module.End Rᵐᵒᵖ (S i))) where
+
+
 
 
 /-
@@ -532,6 +566,7 @@ The below statement MUST be checked and probably corrected in due course.
 Merely pushing as a first attempt and placeholder.
 -/
 
+variable {R : Type*} [Ring R] [IsSemisimpleRing R] [IsArtinianRing R]
 
 
 theorem artin_wedderburn :
