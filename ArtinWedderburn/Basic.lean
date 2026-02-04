@@ -271,6 +271,59 @@ end Lemma2
 open scoped BigOperators
 
 
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [DecidableEq ι]
+
+/--
+Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
+We are about to prove a semi simple ring is an internal direct sum
+of finitely many of its minimal left ideals.
+Assume `R = ⨁ i, I i` as an internal direct sum of left ideals (`Submodule R R`).
+Decompose `1` in the direct sum; this has finite support `s`.
+Then `1 ∈ ⨆ i ∈ s, I i`, hence this finite supremum is a left ideal containing `1`,
+so it must be `⊤` (the whole module).
+-/
+
+theorem exists_finset_iSup_eq_top_of_isInternal
+    (I : ι → Submodule R R) (hI : DirectSum.IsInternal I) :
+    ∃ s : Finset ι, (⨆ i ∈ s, I i) = (⊤ : Submodule R R) := by
+  classical
+  -- Turn the `IsInternal` proof into a decomposition, so we can talk about components.
+  letI : DirectSum.Decomposition I := DirectSum.IsInternal.chooseDecomposition I hI
+
+  -- Let `s` be the (finite) support of the decomposition of `1`.
+  let s : Finset ι := DFinsupp.support ((DirectSum.decompose I) (1 : R))
+  refine ⟨s, ?_⟩
+
+  -- The finite supremum over `s` is a left ideal containing `1`, hence it is `⊤`.
+  refine top_unique ?_
+  intro r _
+
+  have one_mem : (1 : R) ∈ (⨆ i ∈ s, I i) := by
+    -- Each summand lies in the corresponding `I i`,
+    -- so the finite sum lies in the finite supremum.
+    have hsum_mem :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) ∈ (⨆ i ∈ s, I i) := by
+      refine
+        Submodule.sum_mem_biSup (s := s)
+          (f := fun i => (((DirectSum.decompose I) (1 : R)) i : R)) (p := I) ?_
+      intro i hi
+      exact (((DirectSum.decompose I) (1 : R)) i).property
+
+    -- And this sum is exactly `1` (the decomposition recomposes).
+    have hsum_eq :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) = (1 : R) := by
+      simpa [s] using (DirectSum.sum_support_decompose I (1 : R))
+
+    -- Therefore `1` belongs to the finite supremum.
+    simpa [hsum_eq] using hsum_mem
+
+  -- Now use the standard trick: if a left ideal contains `1`, it contains every `r = r • 1`.
+  simpa using ((⨆ i ∈ s, I i).smul_mem r one_mem)
+
+end Lemma3
+
+
 /-
 This is a proof of lemma 4 from the outline, which states:
 For any (unital) ring R, End_R(R) ≅ R.
@@ -479,6 +532,35 @@ def End_DirectSum_Equiv_DirectSum_End
           exact (hk (Finset.mem_univ _)).elim
 
 
+-- An attempt at finishing off Lemma 5.
+def End_PowerOfS_Equiv_Matrix
+  (S : Type*) [AddCommGroup S] [Module R S] (n : ℕ) :
+  Module.End R (Fin n → S) ≃+* Matrix (Fin n) (Fin n) (Module.End R S) :=
+  sorry
+
+
+variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
+
+
+def isotypic_component (S : Type*) [AddCommGroup S] [Module R S] : Submodule R M :=
+  sSup {N : Submodule R M | Nonempty (S ≃ₗ[R] N) ∧ IsSimpleModule R N}
+
+
+theorem existence_of_isotypic_decomposition
+  [IsArtinian R M] [IsSemisimpleModule R M] :
+  ∃ (ι : Type) (_ : Fintype ι) (_ : DecidableEq ι)
+    (S : ι → Type*)
+    (_ : ∀ i, AddCommGroup (S i))
+    (_ : ∀ i, Module R (S i))
+    (_ : ∀ i, IsSimpleModule R (S i))
+    (_ : Pairwise (fun i j => ¬ Nonempty (S i ≃ₗ[R] S j)))
+    (n : ι → ℕ),
+  Nonempty (M ≃ₗ[R] Π i, Fin (n i) → S i) :=
+by
+  sorry
+
+
+
 namespace main_result
 
 
@@ -572,12 +654,20 @@ for a division rings D_i and non-negative integers a_i.
 The proof of this is essentially just colating all of the prior work.
 -/
 
-def End_SemisimpleM_Iso_Sum_Of_Matrices
-  (R : Type*) [Ring R]
-  (M : Type*) [AddCommGroup M] [Module Rᵐᵒᵖ M] [IsArtinian Rᵐᵒᵖ M] [IsSemisimpleModule Rᵐᵒᵖ M]
-  (ι : Type*) (S : ι → Type*) [∀ i, AddCommGroup (S i)] [∀ i, Module Rᵐᵒᵖ (S i)] (n : ι → ℕ) :
-  Module.End Rᵐᵒᵖ M ≃+* (∀ i : ι, Matrix (Fin (n i)) (Fin (n i)) (Module.End Rᵐᵒᵖ (S i))) := by
+variable {M : Type*} [AddCommGroup M] [Module R M]
+
+theorem Lemma5
+  [IsArtinian R M] [IsSemisimpleModule R M] :
+  ∃ (m : ℕ)
+    (D : Fin m → Type*) (_ : ∀ i, DivisionRing (D i))
+    (n : Fin m → ℕ),
+  Nonempty (Module.End R M ≃+* Π i, Matrix (Fin (n i)) (Fin (n i)) (D i)) :=
+  by
     sorry
+
+
+
+
 
 
 /-
