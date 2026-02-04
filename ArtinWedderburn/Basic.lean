@@ -929,30 +929,51 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
       (Π (i : Fin m_raw), Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ
         ≃+* Π (i : Fin m_raw), (Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ :=
     {
-      toFun := fun f i => MulOpposite.op ((MulOpposite.unop f) i),
-      invFun := fun g => MulOpposite.op (fun i => MulOpposite.unop (g i)),
-      left_inv := fun x => MulOpposite.op_unop x,
-      right_inv := fun g => by ext; simp [MulOpposite.op_unop, MulOpposite.unop_op],
+      toFun := fun f i => MulOpposite.op ((MulOpposite.unop f) i)
+      invFun := fun g => MulOpposite.op (fun i => MulOpposite.unop (g i))
+      left_inv := fun x => MulOpposite.op_unop x
+
+      right_inv := fun g => by
+        ext
+        simp [MulOpposite.op_unop, MulOpposite.unop_op]
+
       map_add' := fun x y => by
-        ext; simp [MulOpposite.unop_add, Pi.add_apply, MulOpposite.op_add]
+        ext
+        simp [MulOpposite.unop_add, Pi.add_apply, MulOpposite.op_add]
 
       map_mul' := fun x y => by
-        ext; simp [MulOpposite.unop_mul, Pi.mul_apply, MulOpposite.op_mul]
+        ext
+        simp [MulOpposite.unop_mul, Pi.mul_apply, MulOpposite.op_mul]
     }
 
     let drop_zeros :
       (Π (i : Fin m_raw), (Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ)
         ≃+* (Π (i : valid_indices), (Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ) :=
     {
-      toFun := fun f i => f i,
-      invFun := fun g i =>
-        if h : n_raw i > 0 then g ⟨i, h⟩
-        else MulOpposite.op 0,
+      toFun := fun f i => f i
+      invFun := fun g i => if h : n_raw i > 0 then g ⟨i, h⟩ else MulOpposite.op 0
 
-      left_inv := fun f => by sorry
-      right_inv := fun g => by ext ⟨i, h⟩; dsimp; rw [dif_pos h],
-      map_add' := fun x y => by ext; rfl,
-      map_mul' := fun x y => by ext; rfl
+      left_inv := fun f => by
+        ext i
+        dsimp only [gt_iff_lt, MulOpposite.op_zero, dite_eq_ite]
+        split_ifs with h
+        · rfl
+        · rw [not_lt, Nat.le_zero_eq] at h
+
+          haveI : Subsingleton ((Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ) := by
+            rw [h]
+            infer_instance
+
+          apply Subsingleton.elim
+
+      right_inv := fun g => by
+        ext
+        expose_names
+        exact dif_pos x.property
+
+      map_add' := fun x y => by rfl
+
+      map_mul' := fun x y => by rfl
     }
 
     let reindex :
