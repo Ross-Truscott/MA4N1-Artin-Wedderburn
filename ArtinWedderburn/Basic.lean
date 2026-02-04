@@ -882,7 +882,13 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
           _ = g (x * 1) := by rw [smul_eq_mul]
           _ = g x := by rw [mul_one]
 
-      map_mul' := fun r s => by sorry
+      map_mul' := fun r s => by
+        apply MulOpposite.unop_injective
+        simp only [MulOpposite.unop_op, MulOpposite.unop_mul]
+        apply LinearMap.ext
+        intro x
+        simp only [LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply]
+        exact Eq.symm (mul_assoc x r s)
 
       map_add' := fun r s => by
         apply MulOpposite.unop_injective
