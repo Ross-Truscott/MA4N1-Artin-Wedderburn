@@ -883,7 +883,14 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
           _ = g x := by rw [mul_one]
 
       map_mul' := fun r s => by sorry
-      map_add' := fun r s => by sorry
+
+      map_add' := fun r s => by
+        apply MulOpposite.unop_injective
+        simp only [MulOpposite.unop_op, MulOpposite.unop_add]
+        apply LinearMap.ext
+        intro x
+        simp only [LinearMap.add_apply, mul_add]
+        rfl
     }
 
     let iso_matrix_op (i : Fin ι) :
