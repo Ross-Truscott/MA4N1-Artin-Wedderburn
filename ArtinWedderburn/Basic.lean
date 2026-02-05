@@ -271,6 +271,59 @@ end Lemma2
 open scoped BigOperators
 
 
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [DecidableEq ι]
+
+/--
+Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
+We are about to prove a semi simple ring is an internal direct sum
+of finitely many of its minimal left ideals.
+Assume `R = ⨁ i, I i` as an internal direct sum of left ideals (`Submodule R R`).
+Decompose `1` in the direct sum; this has finite support `s`.
+Then `1 ∈ ⨆ i ∈ s, I i`, hence this finite supremum is a left ideal containing `1`,
+so it must be `⊤` (the whole module).
+-/
+
+theorem exists_finset_iSup_eq_top_of_isInternal
+    (I : ι → Submodule R R) (hI : DirectSum.IsInternal I) :
+    ∃ s : Finset ι, (⨆ i ∈ s, I i) = (⊤ : Submodule R R) := by
+  classical
+  -- Turn the `IsInternal` proof into a decomposition, so we can talk about components.
+  letI : DirectSum.Decomposition I := DirectSum.IsInternal.chooseDecomposition I hI
+
+  -- Let `s` be the (finite) support of the decomposition of `1`.
+  let s : Finset ι := DFinsupp.support ((DirectSum.decompose I) (1 : R))
+  refine ⟨s, ?_⟩
+
+  -- The finite supremum over `s` is a left ideal containing `1`, hence it is `⊤`.
+  refine top_unique ?_
+  intro r _
+
+  have one_mem : (1 : R) ∈ (⨆ i ∈ s, I i) := by
+    -- Each summand lies in the corresponding `I i`,
+    -- so the finite sum lies in the finite supremum.
+    have hsum_mem :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) ∈ (⨆ i ∈ s, I i) := by
+      refine
+        Submodule.sum_mem_biSup (s := s)
+          (f := fun i => (((DirectSum.decompose I) (1 : R)) i : R)) (p := I) ?_
+      intro i hi
+      exact (((DirectSum.decompose I) (1 : R)) i).property
+
+    -- And this sum is exactly `1` (the decomposition recomposes).
+    have hsum_eq :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) = (1 : R) := by
+      simpa [s] using (DirectSum.sum_support_decompose I (1 : R))
+
+    -- Therefore `1` belongs to the finite supremum.
+    simpa [hsum_eq] using hsum_mem
+
+  -- Now use the standard trick: if a left ideal contains `1`, it contains every `r = r • 1`.
+  simpa using ((⨆ i ∈ s, I i).smul_mem r one_mem)
+
+end Lemma3
+
+
 /-
 This is a proof of lemma 4 from the outline, which states:
 For any (unital) ring R, End_R(R) ≅ R.
@@ -479,7 +532,226 @@ def End_DirectSum_Equiv_DirectSum_End
           exact (hk (Finset.mem_univ _)).elim
 
 
-namespace main_result
+/-
+NEW HELPER FUNCTION 1
+Establishes that given our M_i are orthogonal, we have a ring isomorphism
+between the endomorphism ring of the direct sum of M_i, and the product
+of individual endomorphism rings of each M_i.
+
+Intended for usage in the proof of Lemma 5.
+-/
+
+
+def End_DirectSum_Orthogonal
+  {ι : Type*} [Fintype ι] [DecidableEq ι]
+  (M : ι → Type*) [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
+  (h_ortho : ∀ i j, i ≠ j → ∀ (f : M i →ₗ[R] M j), f = 0) :
+  Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i)
+  where
+    toFun F i := {
+      toFun := fun m ↦ (F (Pi.single i m)) i
+      map_add' := by simp [Pi.single_add]
+      map_smul' := by simp [Pi.single_smul]
+    }
+
+    invFun f := {
+      toFun := fun v i ↦ f i (v i)
+      map_add' := by
+        intros
+        ext
+        simp [map_add]
+      map_smul' := by
+        intros
+        ext
+        simp [map_smul]
+    }
+
+    map_add' := by
+      intros
+      ext
+      simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk]
+
+    map_mul' := by
+      intros F G
+      ext i m
+      simp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk, Pi.mul_apply]
+      let v := G (Pi.single i m)
+
+      have h_off_diag_is_zero : ∀ j, i ≠ j → v j = 0 := by
+        intros j hij
+
+        let f_ij : M i →ₗ[R] M j := {
+          toFun := fun x ↦ (G (Pi.single i x)) j
+          map_add' := by
+            intros
+            simp only [Pi.single_add, map_add, Pi.add_apply]
+          map_smul' := by
+            intros
+            simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
+        }
+
+        exact LinearMap.congr_fun (h_ortho i j hij f_ij) m
+
+      have hv_eq : v = Pi.single i (v i) := by
+        ext j; by_cases h : i = j
+        · rw [h, Pi.single_eq_same]
+        · rw [h_off_diag_is_zero j h, Pi.single_eq_of_ne (Ne.symm h)]
+
+      rw [← hv_eq]
+
+    left_inv := by sorry
+
+    right_inv := by
+      intro f
+      ext
+      simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_eq_same]
+
+
+/-
+NEW HELPER FUNCTION 2
+Should give a ring isomorphism between the endomorphism ring of a finite direct sum of
+the module S and the ring of matrices over the endomorphism ring of S.
+
+Also intended for usage in the proof of Lemma 5.
+-/
+
+
+def End_PowerOfS_Equiv_Matrix
+  (S : Type*) [AddCommGroup S] [Module R S] (n : ℕ) :
+  Module.End R (Fin n → S) ≃+* Matrix (Fin n) (Fin n) (Module.End R S)
+  where
+    toFun f i j := {
+      toFun := fun s ↦ (f (Pi.single j s)) i
+
+      map_add' := by
+        intros
+        simp only [Pi.single_add, map_add, Pi.add_apply]
+
+      map_smul' := by
+        intros
+        simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
+    }
+
+    invFun M := {
+      toFun := fun v i ↦ ∑ j, (M i j) (v j)
+
+      map_add' := by
+        intros
+        funext
+        simp only [Pi.add_apply, map_add, Finset.sum_add_distrib]
+
+      map_smul' := by
+        intros
+        funext
+        simp only [Pi.smul_apply, map_smul, RingHom.id_apply, Finset.smul_sum]
+    }
+
+    map_add' := by
+      intros
+      ext
+      simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk,
+        Matrix.add_apply]
+
+    map_mul' := by
+      intros f g
+      ext i j s
+      dsimp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk]
+
+      have h_vector_decomp : (g (Pi.single j s)) = ∑ k, Pi.single k ((g (Pi.single j s)) k) := by
+        ext k
+        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
+          ↓reduceIte]
+
+      rw [h_vector_decomp]
+      rw [map_sum]
+      simp [Finset.sum_apply]
+
+      rw [Matrix.mul_apply]
+      simp only [LinearMap.coeFn_sum, Finset.sum_apply, Module.End.mul_apply, LinearMap.coe_mk,
+        AddHom.coe_mk]
+
+    left_inv := by
+      intro f
+      apply LinearMap.ext
+      intro vec
+      ext k
+      dsimp only [LinearMap.coe_mk, AddHom.coe_mk]
+
+      have h_vector_decomp : vec = ∑ idx, Pi.single idx (vec idx) := by
+        ext idx
+        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
+          ↓reduceIte]
+
+      conv_rhs =>
+        rw [h_vector_decomp]
+        rw [map_sum]
+        rw [Finset.sum_apply]
+
+    right_inv := by
+      intro M
+      ext i j s
+      simp only [LinearMap.coe_mk, AddHom.coe_mk]
+      rw [Finset.sum_eq_single j]
+      · simp only [Pi.single_eq_same]
+      · intros k _ h_neq
+        simp only [Pi.single_apply, if_neg h_neq, map_zero]
+      · intro h; exact (h (Finset.mem_univ j)).elim
+
+
+/-
+NEW HELPER FUNCTION 3
+Hopefully proves that if S and T are simple modules that are not isomorphic, then
+their direct sums are orthogonal.
+
+Also intended for usage in the proof of Lemma 5.
+-/
+
+
+theorem isotypic_orthogonality
+  {S T : Type*} [AddCommGroup S] [Module R S] [AddCommGroup T] [Module R T]
+  [IsSimpleModule R S] [IsSimpleModule R T]
+  (n m : ℕ)
+  (h_distinct : ¬ Nonempty (S ≃ₗ[R] T))
+  (f : (Fin n → S) →ₗ[R] (Fin m → T)) : f = 0 :=
+  by
+    apply LinearMap.ext
+    intro vec
+    ext k
+
+    have h_decomp : vec = ∑ idx, Pi.single idx (vec idx) := by
+      ext idx
+      simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+
+    rw [h_decomp, map_sum, Finset.sum_apply]
+    apply Finset.sum_eq_zero
+    intros j _
+
+    let f_component : S →ₗ[R] T := {
+      toFun := fun s ↦ (f (Pi.single j s)) k
+
+      map_add' := by simp only [Pi.single_add, map_add, Pi.add_apply, implies_true]
+
+      map_smul' := by simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply,
+        implies_true]
+    }
+
+    have h_map_is_zero : f_component = 0 := by
+      by_contra h_nonzero
+
+      have h_ker : LinearMap.ker f_component = ⊥ :=
+        (eq_bot_or_eq_top (LinearMap.ker f_component)).resolve_right
+        (fun h_top => h_nonzero (LinearMap.ker_eq_top.mp h_top))
+
+      have h_range : LinearMap.range f_component = ⊤ :=
+        (eq_bot_or_eq_top (LinearMap.range f_component)).resolve_left
+        (fun h_bot => h_nonzero (LinearMap.range_eq_bot.mp h_bot))
+
+      exact h_distinct ⟨LinearEquiv.ofBijective f_component
+        ⟨LinearMap.ker_eq_bot.mp h_ker, LinearMap.range_eq_top.mp h_range⟩⟩
+
+    change f_component (vec j) = 0
+    rw [h_map_is_zero]
+    simp
 
 
 variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
@@ -565,22 +837,6 @@ theorem Lemma5
 
 
 /-
-This is a proof of lemma 5 from the outline, which states:
-For a semi-simple Artinian right R module (left R^op module) M,
- End_R(M) ≅ ⊕ M_{a_i}(D_i)
-for a division rings D_i and non-negative integers a_i.
-The proof of this is essentially just colating all of the prior work.
--/
-
-def End_SemisimpleM_Iso_Sum_Of_Matrices
-  (R : Type*) [Ring R]
-  (M : Type*) [AddCommGroup M] [Module Rᵐᵒᵖ M] [IsArtinian Rᵐᵒᵖ M] [IsSemisimpleModule Rᵐᵒᵖ M]
-  (ι : Type*) (S : ι → Type*) [∀ i, AddCommGroup (S i)] [∀ i, Module Rᵐᵒᵖ (S i)] (n : ι → ℕ) :
-  Module.End Rᵐᵒᵖ M ≃+* (∀ i : ι, Matrix (Fin (n i)) (Fin (n i)) (Module.End Rᵐᵒᵖ (S i))) := by
-    sorry
-
-
-/-
 Artin-Wedderburn Theorem
 -/
 
@@ -626,8 +882,21 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
           _ = g (x * 1) := by rw [smul_eq_mul]
           _ = g x := by rw [mul_one]
 
-      map_mul' := fun r s => by sorry
-      map_add' := fun r s => by sorry
+      map_mul' := fun r s => by
+        apply MulOpposite.unop_injective
+        simp only [MulOpposite.unop_op, MulOpposite.unop_mul]
+        apply LinearMap.ext
+        intro x
+        simp only [LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply]
+        exact Eq.symm (mul_assoc x r s)
+
+      map_add' := fun r s => by
+        apply MulOpposite.unop_injective
+        simp only [MulOpposite.unop_op, MulOpposite.unop_add]
+        apply LinearMap.ext
+        intro x
+        simp only [LinearMap.add_apply, mul_add]
+        rfl
     }
 
     let iso_matrix_op (i : Fin ι) :
@@ -649,37 +918,62 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
             Matrix.of_add_of, EmbeddingLike.apply_eq_iff_eq]
           rfl,
 
-        map_mul' := by sorry
+        map_mul' := by
+          intro a b
+          ext i j
+          simp only [Matrix.mul_apply, MulOpposite.unop_mul, Matrix.of_apply,
+            Finset.op_sum, MulOpposite.op_mul]
       }
 
     let iso_pi_op :
       (Π (i : Fin m_raw), Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ
         ≃+* Π (i : Fin m_raw), (Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ :=
     {
-      toFun := fun f i => MulOpposite.op ((MulOpposite.unop f) i),
-      invFun := fun g => MulOpposite.op (fun i => MulOpposite.unop (g i)),
-      left_inv := fun x => MulOpposite.op_unop x,
-      right_inv := fun g => by ext; simp [MulOpposite.op_unop, MulOpposite.unop_op],
+      toFun := fun f i => MulOpposite.op ((MulOpposite.unop f) i)
+      invFun := fun g => MulOpposite.op (fun i => MulOpposite.unop (g i))
+      left_inv := fun x => MulOpposite.op_unop x
+
+      right_inv := fun g => by
+        ext
+        simp [MulOpposite.op_unop, MulOpposite.unop_op]
+
       map_add' := fun x y => by
-        ext; simp [MulOpposite.unop_add, Pi.add_apply, MulOpposite.op_add]
+        ext
+        simp [MulOpposite.unop_add, Pi.add_apply, MulOpposite.op_add]
 
       map_mul' := fun x y => by
-        ext; simp [MulOpposite.unop_mul, Pi.mul_apply, MulOpposite.op_mul]
+        ext
+        simp [MulOpposite.unop_mul, Pi.mul_apply, MulOpposite.op_mul]
     }
 
     let drop_zeros :
       (Π (i : Fin m_raw), (Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ)
         ≃+* (Π (i : valid_indices), (Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ) :=
     {
-      toFun := fun f i => f i,
-      invFun := fun g i =>
-        if h : n_raw i > 0 then g ⟨i, h⟩
-        else MulOpposite.op 0,
+      toFun := fun f i => f i
+      invFun := fun g i => if h : n_raw i > 0 then g ⟨i, h⟩ else MulOpposite.op 0
 
-      left_inv := fun f => by sorry
-      right_inv := fun g => by ext ⟨i, h⟩; dsimp; rw [dif_pos h],
-      map_add' := fun x y => by ext; rfl,
-      map_mul' := fun x y => by ext; rfl
+      left_inv := fun f => by
+        ext i
+        dsimp only [gt_iff_lt, MulOpposite.op_zero, dite_eq_ite]
+        split_ifs with h
+        · rfl
+        · rw [not_lt, Nat.le_zero_eq] at h
+
+          haveI : Subsingleton ((Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ) := by
+            rw [h]
+            infer_instance
+
+          apply Subsingleton.elim
+
+      right_inv := fun g => by
+        ext
+        expose_names
+        exact dif_pos x.property
+
+      map_add' := fun x y => by rfl
+
+      map_mul' := fun x y => by rfl
     }
 
     let reindex :
