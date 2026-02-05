@@ -31,7 +31,7 @@ def ideal (S : Set R) : Prop :=
   (∀ x r, x ∈ S → r * x ∈ S)
 
 /-
-Theorem:
+Result:
 The kernel of a ring homomorphism is an ideal.
 
 Proof:
@@ -59,17 +59,17 @@ theorem ker_hom_is_ideal :
     simp only [Set.mem_setOf_eq, map_mul] at *
     rw [hx, mul_zero]
 
-
+-- Defining a ring congruence using ring homomorphism f.
 def congruence : RingCon R where
   r x y := f x = f y
   add' := by
     intro w x y z h1 h2
-    simp [map_add]
+    simp only [map_add]
     rw [h1, h2]
 
   mul' := by
     intro w x y z h1 h2
-    simp [map_mul]
+    simp only [map_mul]
     rw [h1, h2]
 
   iseqv := by
@@ -78,12 +78,12 @@ def congruence : RingCon R where
       rfl
 
     · intro x y h
-      simp [h.symm]
+      simp only [h.symm]
 
     · intro x y z h1 h2
       rw [h1, h2]
 
-
+-- Defines ring homomorphism from R / ker(f) to f(R) ready for first_iso_thm.
 def hom : (congruence f).Quotient →+* f.range where
   toFun := Quotient.lift
     (f.codRestrict f.range Set.mem_range_self)
@@ -92,12 +92,12 @@ def hom : (congruence f).Quotient →+* f.range where
   map_zero' := by
     apply Subtype.ext
     change f 0 = 0
-    simp
+    simp only [map_zero]
 
   map_one' := by
     apply Subtype.ext
     change f 1 = 1
-    simp
+    simp only [map_one]
 
   map_add' := by
     intro x y
@@ -115,12 +115,19 @@ def hom : (congruence f).Quotient →+* f.range where
     change f (x * y) = f x * f y
     exact RingHom.map_mul f x y
 
+/-
+Result:
+The first isomorphism theorem for rings.
 
--- Statement of the first isomorphism theorem for rings.
+Proof:
+1) Prove injectivity.
+2) Prove surjectivity.
+3) Thus our homomorphism is bijective and indeed an isomorphism.
+-/
+
 theorem first_iso_thm :
   Nonempty ((congruence f).Quotient ≃+* f.range) :=
   by
-
     have bijection : Function.Bijective (hom f) :=
     by
       constructor
@@ -137,7 +144,16 @@ theorem first_iso_thm :
 
     exact Nonempty.intro (RingEquiv.ofBijective (hom f) bijection)
 
--- Statement of the first isomorphism theorem for modules.
+/-
+Result:
+The first isomorphism theorem for modules.
+
+Proof:
+1) Restrict the codomain of f and lift to the quotient space.
+2) Prove injectivity.
+3) Prove surjectivity.
+-/
+
 noncomputable def first_iso_thm_modules {i j} (f : M i →ₗ[R] M j) :
   (M i ⧸ LinearMap.ker f) ≃ₗ[R] LinearMap.range f :=
   by
@@ -158,8 +174,16 @@ noncomputable def first_iso_thm_modules {i j} (f : M i →ₗ[R] M j) :
       rw [Submodule.range_liftQ]
       exact LinearMap.range_rangeRestrict f
 
+/-
+Result:
+Schur's Lemma.
 
--- Statement and proof of Schur's lemma.
+Proof:
+1) Prove injectivity.
+2) Prove surjectivity.
+3) Bundle these properties together to show we have a bijection.
+-/
+
 theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
   (phi : M i →ₗ[R] M j) (h0 : phi ≠ 0) : Function.Bijective phi :=
   by
