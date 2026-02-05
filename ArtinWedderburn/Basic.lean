@@ -20,6 +20,8 @@ namespace schur
 variable {R : Type*} [Ring R]
 variable {S : Type*} [Ring S]
 variable (f : R →+* S)
+variable {ι : Type*}
+variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
 def ideal (S : Set R) : Prop :=
   (0 ∈ S) ∧
@@ -123,11 +125,6 @@ theorem first_iso_thm :
         exists Quotient.mk (congruence f).toSetoid r
 
     exact Nonempty.intro (RingEquiv.ofBijective (hom f) bijection)
-
-
-variable {R : Type*} [Ring R]
-variable {ι : Type*}
-variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
 -- Statement of the first isomorphism theorem for modules.
 noncomputable def first_iso_thm_modules {i j} (f : M i →ₗ[R] M j) :
@@ -268,6 +265,59 @@ def NEndEquivMatrixEnd
 end Lemma2
 
 
+namespace Lemma3
+
+variable {R : Type*} [Ring R]
+variable {ι : Type*} [DecidableEq ι]
+
+/--
+Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
+We are about to prove a semi simple ring is an internal direct sum of finitely many of its minimal left ideals.
+Assume `R = ⨁ i, I i` as an internal direct sum of left ideals (`Submodule R R`).
+Decompose `1` in the direct sum; this has finite support `s`.
+Then `1 ∈ ⨆ i ∈ s, I i`, hence this finite supremum is a left ideal containing `1`,
+so it must be `⊤` (the whole module).
+-/
+
+theorem exists_finset_iSup_eq_top_of_isInternal
+    (I : ι → Submodule R R) (hI : DirectSum.IsInternal I) :
+    ∃ s : Finset ι, (⨆ i ∈ s, I i) = (⊤ : Submodule R R) := by
+  classical
+  -- Turn the `IsInternal` proof into a decomposition, so we can talk about components.
+  letI : DirectSum.Decomposition I := DirectSum.IsInternal.chooseDecomposition I hI
+
+  -- Let `s` be the (finite) support of the decomposition of `1`.
+  let s : Finset ι := DFinsupp.support ((DirectSum.decompose I) (1 : R))
+  refine ⟨s, ?_⟩
+
+  -- The finite supremum over `s` is a left ideal containing `1`, hence it is `⊤`.
+  refine top_unique ?_
+  intro r _
+
+  have one_mem : (1 : R) ∈ (⨆ i ∈ s, I i) := by
+    -- Each summand lies in the corresponding `I i`,
+    -- so the finite sum lies in the finite supremum.
+    have hsum_mem :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) ∈ (⨆ i ∈ s, I i) := by
+      refine
+        Submodule.sum_mem_biSup (s := s)
+          (f := fun i => (((DirectSum.decompose I) (1 : R)) i : R)) (p := I) ?_
+      intro i hi
+      exact (((DirectSum.decompose I) (1 : R)) i).property
+
+    -- And this sum is exactly `1` (the decomposition recomposes).
+    have hsum_eq :
+        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) = (1 : R) := by
+      simpa [s] using (DirectSum.sum_support_decompose I (1 : R))
+
+    -- Therefore `1` belongs to the finite supremum.
+    simpa [hsum_eq] using hsum_mem
+
+  -- Now use the standard trick: if a left ideal contains `1`, it contains every `r = r • 1`.
+  simpa using ((⨆ i ∈ s, I i).smul_mem r one_mem)
+
+end Lemma3
+
 open scoped BigOperators
 
 
@@ -336,7 +386,7 @@ These statements are dual to each other however, right R modules are left R^op m
 This means we actually aim to prove R≅M_n(D)ᵒᵖ in the end.
 -/
 
-def RopToEndRMap
+def RopToEndRMap --Defines the map in the above proof
     (R : Type) [Ring R] :
     Rᵐᵒᵖ →+* Module.End R R :=
 { toFun := fun s =>
@@ -389,11 +439,11 @@ noncomputable def RingEquivEnd
     ⟩
 
 /-
-Proof that for disctinct modules S_i such that Hom(S_i,S_j) = 0 for i≠j, End(⊕S_i) ≅ ⊕End(S_i).
+Proof that given disctinct modules S_i such that Hom(S_i,S_j) = 0, End(⊕S_i) ≅ ⊕End(S_i).
 
 We note that lemma 2, and this result, are special cases of the more general forumla
 End(⊕M_i) = ⊕_i⊕_jHom(M_i,M_j) for some modules M_i. Note that this is a big matrix.
-Thus, to prove this we need to show that for isotypic
+Thus, for AW, we need to prove that for isotypic
 (i.e. built out of copies of a single simple module) modules M,N, Hom(M,N) = 0,
 that is, the big matrix is diagonal. Since lemma 2 is a special case, the proof goes similarly.
 -/
@@ -439,9 +489,8 @@ open scoped BigOperators
 def End_DirectSum_Equiv_DirectSum_End
     (h_pairwise : Pairwise (fun i j ↦ ∀ f : M i →ₗ[R] M j, f = 0)) :
     Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) where
-      --Defines Functions
       toFun F i := {
-        toFun := fun m ↦ (F (Pi.single i m)) i
+        toFun := fun m ↦ (F (Pi.single i m)) i --first include, apply F, then project
         map_add' := by
           intros x y
           rw [Pi.single_add, map_add, Pi.add_apply]
@@ -485,7 +534,7 @@ def End_DirectSum_Equiv_DirectSum_End
               intros m x
               rw [RingHom.id_apply, Pi.single_smul, LinearMap.map_smul_of_tower, Pi.smul_apply]
           }
-          --This shows the j-th component from the above is 0, which is by schurs
+          --This shows the j-th component from the above is 0, which is by schurs/assumption
           have : f = 0 :=  (h_pairwise hij) f
           exact LinearMap.congr_fun this m
 
@@ -820,12 +869,24 @@ def ringConj {R M N : Type*} [Ring R] [AddCommGroup M] [Module R M] [AddCommGrou
 
 
 /-
+We unfortunatley couldnt work out how to state and prove lemma 5 in the time we had.
+The usual proof goes as follows:
+M is semisimple and Artinian, hence is the direct sum of finitely many simple submodules I_j.
+These I_j may not be pairwise distinct, so we group there togther with multiplicity to get
+the isotypic decomposition of M, M≅ ⊕S_i≅ ⊕I_i^{n_i}. Then, by Isotypic_Hom_Eq_Zero,
+End_DirectSum_Equiv_DirectSum_End and ringConj we have,
+End(M)≅End(⊕S_i)≅⊕M_n(D) by NEndEquivMatrixEnd with D = End(S_i).
+
+The lemmas for all of this exists, but working out how to get the isotypic decomposition
+and how to chain all of these lemmas together turned out to be quite difficult. We ended up with
+two slightly different statments, neither proven, but one able to be used for the main proof.
+-/
+
+/-
 An attempted statement of Lemma 5, in slightly different form of that to the outline.
 
 Proof difficult.
 -/
-
-
 theorem Lemma5
   [IsArtinian R M] [IsSemisimpleModule R M] :
   ∃ (m : ℕ)
@@ -837,7 +898,33 @@ theorem Lemma5
 
 
 /-
+<<<<<<< HEAD
 Artin-Wedderburn Theorem
+=======
+This is a proof of lemma 5 from the outline, which states:
+For a semi-simple Artinian right R module (left R^op module) M,
+ End_R(M) ≅ ⊕ M_{a_i}(D_i)
+for a division rings D_i and non-negative integers a_i.
+
+The proof of this is essentially just colating all of the prior work.
+-/
+
+def End_SemisimpleM_Iso_Sum_Of_Matrices
+  (R : Type*) [Ring R]
+  (M : Type*) [AddCommGroup M] [Module Rᵐᵒᵖ M] [IsArtinian Rᵐᵒᵖ M] [IsSemisimpleModule Rᵐᵒᵖ M]
+  (ι : Type*) (S : ι → Type*) [∀ i, AddCommGroup (S i)] [∀ i, Module Rᵐᵒᵖ (S i)] (n : ι → ℕ) :
+  Module.End Rᵐᵒᵖ M ≃+* (∀ i : ι, Matrix (Fin (n i)) (Fin (n i)) (Module.End Rᵐᵒᵖ (S i))) where
+    toFun F := sorry
+
+    invFun G := sorry
+
+    map_add' := sorry
+
+    map_mul' := sorry
+
+/-
+Artin-Wedderburn Theorem.
+>>>>>>> 738f7fb (Added some comments, and some context to lemma 5)
 -/
 
 
@@ -1221,59 +1308,6 @@ theorem isotypic_orthogonality
     change f_component (vec j) = 0
     rw [h_map_is_zero]
     simp
-
-
-/- Lemma3-/
-
-variable {R : Type*} [Ring R]
-variable {ι : Type*} [DecidableEq ι]
-
-/--
-Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
-We are about to prove a semi simple ring is an internal direct sum of finitely many of its minimal left ideals.
-Assume `R = ⨁ i, I i` as an internal direct sum of left ideals (`Submodule R R`).
-Decompose `1` in the direct sum; this has finite support `s`.
-Then `1 ∈ ⨆ i ∈ s, I i`, hence this finite supremum is a left ideal containing `1`,
-so it must be `⊤` (the whole module).
--/
-
-theorem exists_finset_iSup_eq_top_of_isInternal
-    (I : ι → Submodule R R) (hI : DirectSum.IsInternal I) :
-    ∃ s : Finset ι, (⨆ i ∈ s, I i) = (⊤ : Submodule R R) := by
-  classical
-  -- Turn the `IsInternal` proof into a decomposition, so we can talk about components.
-  letI : DirectSum.Decomposition I := DirectSum.IsInternal.chooseDecomposition I hI
-
-  -- Let `s` be the (finite) support of the decomposition of `1`.
-  let s : Finset ι := DFinsupp.support ((DirectSum.decompose I) (1 : R))
-  refine ⟨s, ?_⟩
-
-  -- The finite supremum over `s` is a left ideal containing `1`, hence it is `⊤`.
-  refine top_unique ?_
-  intro r _
-
-  have one_mem : (1 : R) ∈ (⨆ i ∈ s, I i) := by
-    -- Each summand lies in the corresponding `I i`,
-    -- so the finite sum lies in the finite supremum.
-    have hsum_mem :
-        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) ∈ (⨆ i ∈ s, I i) := by
-      refine
-        Submodule.sum_mem_biSup (s := s)
-          (f := fun i => (((DirectSum.decompose I) (1 : R)) i : R)) (p := I) ?_
-      intro i hi
-      exact (((DirectSum.decompose I) (1 : R)) i).property
-
-    -- And this sum is exactly `1` (the decomposition recomposes).
-    have hsum_eq :
-        (∑ i ∈ s, (((DirectSum.decompose I) (1 : R)) i : R)) = (1 : R) := by
-      simpa [s] using (DirectSum.sum_support_decompose I (1 : R))
-
-    -- Therefore `1` belongs to the finite supremum.
-    simpa [hsum_eq] using hsum_mem
-
-  -- Now use the standard trick: if a left ideal contains `1`, it contains every `r = r • 1`.
-  simpa using ((⨆ i ∈ s, I i).smul_mem r one_mem)
-
 
 variable {R : Type*} [Ring R]
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
