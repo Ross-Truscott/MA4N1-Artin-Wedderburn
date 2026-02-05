@@ -236,55 +236,86 @@ This gives us that End(M)≅Mₙ(End(S))≅Mₙ(D) by Schurs lemma.
 This is still true without the simplicity assumption, so this is what we prove.
 -/
 
-def NEndEquivMatrixEnd
-  (n : ℕ) (R : Type) [Ring R] (S : Type) [AddCommGroup S] [Module R S] :
-  Module.End R (Fin n → S) ≃ Matrix (Fin n) (Fin n) (Module.End R S) where
-    toFun F i j :=
-      { --Sends s to the satndard basis vector e_j, apply f, then pick out the ith coordinate
-        toFun s := F (Pi.single j s) i
-        --Proof its linear
-        map_add' s t := by
-          rw [Pi.single_add,map_add, Pi.add_apply]
-        map_smul' r s := by
-          rw [Pi.single_smul]
-          simp only [map_smul, Pi.smul_apply, RingHom.id_apply]
-        }
-    invFun M :=
-    { --Picks out the ith coordinate of the image of the jth coordinate under the linear map
-      toFun v i := ∑ j, M i j (v j)
-        --Proof its linear
-      map_add' v w := by
-          funext i
-          simp only [Pi.add_apply, map_add, Finset.sum_add_distrib]
-      map_smul' r v := by
-          funext i
-          simp only [Pi.smul_apply, map_smul, RingHom.id_apply]
-          rw [Finset.smul_sum]
+def End_PowerOfS_Equiv_Matrix
+  (R : Type*) [Ring R] (S : Type*) [AddCommGroup S] [Module R S] (n : ℕ) :
+  Module.End R (Fin n → S) ≃+* Matrix (Fin n) (Fin n) (Module.End R S)
+  where
+  --Send s to the satndard basis vector e_j, apply f, then pick out the ith coordinate
+    toFun f i j := {
+      toFun := fun s ↦ (f (Pi.single j s)) i
+      map_add' := by
+        intros
+        simp only [Pi.single_add, map_add, Pi.add_apply]
+
+      map_smul' := by
+        intros
+        simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
     }
-    --Proof they are inverse
+--Pick out the ith coordinate of the image of the jth coordinate under the linear map
+    invFun M := {
+      toFun := fun v i ↦ ∑ j, (M i j) (v j)
+      map_add' := by
+        intros
+        funext
+        simp only [Pi.add_apply, map_add, Finset.sum_add_distrib]
+
+      map_smul' := by
+        intros
+        funext
+        simp only [Pi.smul_apply, map_smul, RingHom.id_apply, Finset.smul_sum]
+    }
+--Proof that this is a homomorphism
+    map_add' := by
+      intros
+      ext
+      simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk,
+        Matrix.add_apply]
+
+    map_mul' := by
+      intros f g
+      ext i j s
+      dsimp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk]
+
+      have h_vector_decomp : (g (Pi.single j s)) = ∑ k, Pi.single k ((g (Pi.single j s)) k) := by
+        ext k
+        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
+          ↓reduceIte]
+
+      rw [h_vector_decomp]
+      rw [map_sum]
+      simp [Finset.sum_apply]
+
+      rw [Matrix.mul_apply]
+      simp only [LinearMap.coeFn_sum, Finset.sum_apply, Module.End.mul_apply, LinearMap.coe_mk,
+        AddHom.coe_mk]
+--Proof that our functions are inverse
     left_inv := by
-      intro F
-      ext a b
-      simp only [LinearMap.coe_mk, AddHom.coe_mk, LinearMap.coe_comp, LinearMap.coe_single,
-        Function.comp_apply, Pi.single_apply]
-      rw [Finset.sum_eq_single a]
-      · simp only [↓reduceIte]
-      · simp only [Finset.mem_univ, ne_eq, forall_const]
-        intro c cna
-        rw [if_neg cna, Pi.single_zero, map_zero, Pi.zero_apply]
-      · simp only [Finset.mem_univ, not_true_eq_false, ↓reduceIte, IsEmpty.forall_iff]
+      intro f
+      apply LinearMap.ext
+      intro vec
+      ext k
+      dsimp only [LinearMap.coe_mk, AddHom.coe_mk]
+
+      have h_vector_decomp : vec = ∑ idx, Pi.single idx (vec idx) := by
+        ext idx
+        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
+          ↓reduceIte]
+
+      conv_rhs =>
+        rw [h_vector_decomp]
+        rw [map_sum]
+        rw [Finset.sum_apply]
 
     right_inv := by
       intro M
-      ext a b c
-      simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_apply]
-      rw [Finset.sum_eq_single b]
-      · simp only [↓reduceIte]
-      · simp only [Finset.mem_univ, ne_eq, forall_const]
-        intro d dnb
-        rw [if_neg dnb]
-        exact LinearMap.map_zero (M a d)
-      · simp only [Finset.mem_univ, not_true_eq_false, ↓reduceIte, IsEmpty.forall_iff]
+      ext i j s
+      simp only [LinearMap.coe_mk, AddHom.coe_mk]
+      rw [Finset.sum_eq_single j]
+      · simp only [Pi.single_eq_same]
+      · intros k _ h_neq
+        simp only [Pi.single_apply, if_neg h_neq, map_zero]
+      · intro h; exact (h (Finset.mem_univ j)).elim
+
 
 namespace Lemma3
 
@@ -946,94 +977,60 @@ def End_DirectSum_Orthogonal
       simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_eq_same]
 
 /-
-Should give a ring isomorphism between the endomorphism ring of a finite direct sum of
-the module S and the ring of matrices over the endomorphism ring of S.
-
-Also intended for usage in the proof of Lemma 5.
-This is actually just lemma2 again
+This was our original statement of lemma2, which ended up being rewritten and generalised slightly.
+The statements are very similar, but this is kept here for completeness
 -/
 
-
-def End_PowerOfS_Equiv_Matrix
-  (S : Type*) [AddCommGroup S] [Module R S] (n : ℕ) :
-  Module.End R (Fin n → S) ≃+* Matrix (Fin n) (Fin n) (Module.End R S)
-  where
-    toFun f i j := {
-      toFun := fun s ↦ (f (Pi.single j s)) i
-
-      map_add' := by
-        intros
-        simp only [Pi.single_add, map_add, Pi.add_apply]
-
-      map_smul' := by
-        intros
-        simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
+def NEndEquivMatrixEnd
+  (n : ℕ) (R : Type) [Ring R] (S : Type) [AddCommGroup S] [Module R S] :
+  Module.End R (Fin n → S) ≃ Matrix (Fin n) (Fin n) (Module.End R S) where
+    toFun F i j :=
+      { --Sends s to the satndard basis vector e_j, apply f, then pick out the ith coordinate
+        toFun s := F (Pi.single j s) i
+        --Proof its linear
+        map_add' s t := by
+          rw [Pi.single_add,map_add, Pi.add_apply]
+        map_smul' r s := by
+          rw [Pi.single_smul]
+          simp only [map_smul, Pi.smul_apply, RingHom.id_apply]
+        }
+    invFun M :=
+    { --Picks out the ith coordinate of the image of the jth coordinate under the linear map
+      toFun v i := ∑ j, M i j (v j)
+        --Proof its linear
+      map_add' v w := by
+          funext i
+          simp only [Pi.add_apply, map_add, Finset.sum_add_distrib]
+      map_smul' r v := by
+          funext i
+          simp only [Pi.smul_apply, map_smul, RingHom.id_apply]
+          rw [Finset.smul_sum]
     }
-
-    invFun M := {
-      toFun := fun v i ↦ ∑ j, (M i j) (v j)
-
-      map_add' := by
-        intros
-        funext
-        simp only [Pi.add_apply, map_add, Finset.sum_add_distrib]
-
-      map_smul' := by
-        intros
-        funext
-        simp only [Pi.smul_apply, map_smul, RingHom.id_apply, Finset.smul_sum]
-    }
-
-    map_add' := by
-      intros
-      ext
-      simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk,
-        Matrix.add_apply]
-
-    map_mul' := by
-      intros f g
-      ext i j s
-      dsimp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk]
-
-      have h_vector_decomp : (g (Pi.single j s)) = ∑ k, Pi.single k ((g (Pi.single j s)) k) := by
-        ext k
-        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
-          ↓reduceIte]
-
-      rw [h_vector_decomp]
-      rw [map_sum]
-      simp [Finset.sum_apply]
-
-      rw [Matrix.mul_apply]
-      simp only [LinearMap.coeFn_sum, Finset.sum_apply, Module.End.mul_apply, LinearMap.coe_mk,
-        AddHom.coe_mk]
-
+    --Proof they are inverse
     left_inv := by
-      intro f
-      apply LinearMap.ext
-      intro vec
-      ext k
-      dsimp only [LinearMap.coe_mk, AddHom.coe_mk]
-
-      have h_vector_decomp : vec = ∑ idx, Pi.single idx (vec idx) := by
-        ext idx
-        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
-          ↓reduceIte]
-
-      conv_rhs =>
-        rw [h_vector_decomp]
-        rw [map_sum]
-        rw [Finset.sum_apply]
+      intro F
+      ext a b
+      simp only [LinearMap.coe_mk, AddHom.coe_mk, LinearMap.coe_comp, LinearMap.coe_single,
+        Function.comp_apply, Pi.single_apply]
+      rw [Finset.sum_eq_single a]
+      · simp only [↓reduceIte]
+      · simp only [Finset.mem_univ, ne_eq, forall_const]
+        intro c cna
+        rw [if_neg cna, Pi.single_zero, map_zero, Pi.zero_apply]
+      · simp only [Finset.mem_univ, not_true_eq_false, ↓reduceIte, IsEmpty.forall_iff]
 
     right_inv := by
       intro M
-      ext i j s
-      simp only [LinearMap.coe_mk, AddHom.coe_mk]
-      rw [Finset.sum_eq_single j]
-      · simp only [Pi.single_eq_same]
-      · intros k _ h_neq
-        simp only [Pi.single_apply, if_neg h_neq, map_zero]
-      · intro h; exact (h (Finset.mem_univ j)).elim
+      ext a b c
+      simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_apply]
+      rw [Finset.sum_eq_single b]
+      · simp only [↓reduceIte]
+      · simp only [Finset.mem_univ, ne_eq, forall_const]
+        intro d dnb
+        rw [if_neg dnb]
+        exact LinearMap.map_zero (M a d)
+      · simp only [Finset.mem_univ, not_true_eq_false, ↓reduceIte, IsEmpty.forall_iff]
+
 
 /-
 Hopefully proves that if S and T are simple modules that are not isomorphic, then
