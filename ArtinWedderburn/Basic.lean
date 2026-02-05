@@ -454,6 +454,17 @@ variable {R : Type*} [Ring R]
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
+--Basically just schurs lemma, if a map between simple modules isnt an iso, its 0.
+theorem Simple_Hom_Eq_Zero_If_Not_Iso
+    {i j : ι} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
+    (h_not_iso : ¬ Nonempty (M i ≃ₗ[R] M j)) (f : M i →ₗ[R] M j) : f = 0 := by
+    classical
+    by_contra hf
+    apply h_not_iso
+    have h' : Function.Bijective f :=
+    schur.schurs (i := i) (j := j) f hf
+    refine ⟨LinearEquiv.ofBijective f h'⟩
+
 --For the actual proof we need to first group our simple decompositon into isotypic modules,
 --that is, we define S_i ≅ I^{n_i}_i so that each S_i is pairwise non-isomorphic
 --Hence we need to show that if Hom(M,N) = 0, so does Hom(M^m,N^n).
@@ -651,9 +662,16 @@ the isotypic decomposition of M, M≅ ⊕S_i≅ ⊕I_i^{n_i}. Then, by Isotypic_
 End_DirectSum_Equiv_DirectSum_End and ringConj we have,
 End(M)≅End(⊕S_i)≅⊕M_n(D) by NEndEquivMatrixEnd with D = End(S_i).
 
-The lemmas for all of this exists, but working out how to chain all
-of these lemmas together turned out to be quite difficult. We ended up with
-two slightly different statements, neither proven, but one able to be used for the main proof.
+The lemmas for all of this exists, but working out how to get the isotypic decomposition
+and how to chain all of these lemmas together turned out to be quite difficult. We ended up with
+two slightly different statments, neither proven, but one able to be used for the main proof.
+
+We also have 2 different statements so that we could actually try to prove a form of AW.
+The actual theorem says that each of the division rings D_i are End(S_i) and this is data
+you want to keep track of if youre doing computations (Say working out the reps of C[S_3])
+so really we want a definition and not a theorem, and should keep the end result general.
+However failing to make progress with this, we simply stated the result as a theorem to
+proceed with AW.
 -/
 
 /-
@@ -895,210 +913,3 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
     convert final_composition
 
 end main_result
-
-namespace Grave_Yard
-
-/-
-There were a number of theorems that we proved and did not end up needing, or where the statements
-were in the end not exactly as required, leading to their replacement.
-For completeness, we list them here.
--/
-
-/-
-Establishes that given our M_i are orthogonal, we have a ring isomorphism
-between the endomorphism ring of the direct sum of M_i, and the product
-of individual endomorphism rings of each M_i.
-
-Intended for usage in the proof of Lemma 5.
--/
-
-def End_DirectSum_Orthogonal
-  {ι : Type*} [Fintype ι] [DecidableEq ι]
-  (M : ι → Type*) [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
-  (h_ortho : ∀ i j, i ≠ j → ∀ (f : M i →ₗ[R] M j), f = 0) :
-  Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i)
-  where
-    toFun F i := {
-      toFun := fun m ↦ (F (Pi.single i m)) i
-      map_add' := by simp [Pi.single_add]
-      map_smul' := by simp [Pi.single_smul]
-    }
-
-    invFun f := {
-      toFun := fun v i ↦ f i (v i)
-      map_add' := by
-        intros
-        ext
-        simp [map_add]
-      map_smul' := by
-        intros
-        ext
-        simp [map_smul]
-    }
-
-    map_add' := by
-      intros
-      ext
-      simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk]
-
-    map_mul' := by
-      intros F G
-      ext i m
-      simp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk, Pi.mul_apply]
-      let v := G (Pi.single i m)
-
-      have h_off_diag_is_zero : ∀ j, i ≠ j → v j = 0 := by
-        intros j hij
-
-        let f_ij : M i →ₗ[R] M j := {
-          toFun := fun x ↦ (G (Pi.single i x)) j
-          map_add' := by
-            intros
-            simp only [Pi.single_add, map_add, Pi.add_apply]
-          map_smul' := by
-            intros
-            simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
-        }
-
-        exact LinearMap.congr_fun (h_ortho i j hij f_ij) m
-
-      have hv_eq : v = Pi.single i (v i) := by
-        ext j; by_cases h : i = j
-        · rw [h, Pi.single_eq_same]
-        · rw [h_off_diag_is_zero j h, Pi.single_eq_of_ne (Ne.symm h)]
-
-      rw [← hv_eq]
-
-    left_inv := by sorry
-
-    right_inv := by
-      intro f
-      ext
-      simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_eq_same]
-
-/-
-This was our original statement of lemma2, which ended up being rewritten and generalised slightly.
-The statements are very similar, but this is kept here for completeness
--/
-
-def NEndEquivMatrixEnd
-  (n : ℕ) (R : Type) [Ring R] (S : Type) [AddCommGroup S] [Module R S] :
-  Module.End R (Fin n → S) ≃ Matrix (Fin n) (Fin n) (Module.End R S) where
-    toFun F i j :=
-      { --Sends s to the satndard basis vector e_j, apply f, then pick out the ith coordinate
-        toFun s := F (Pi.single j s) i
-        --Proof its linear
-        map_add' s t := by
-          rw [Pi.single_add,map_add, Pi.add_apply]
-        map_smul' r s := by
-          rw [Pi.single_smul]
-          simp only [map_smul, Pi.smul_apply, RingHom.id_apply]
-        }
-    invFun M :=
-    { --Picks out the ith coordinate of the image of the jth coordinate under the linear map
-      toFun v i := ∑ j, M i j (v j)
-        --Proof its linear
-      map_add' v w := by
-          funext i
-          simp only [Pi.add_apply, map_add, Finset.sum_add_distrib]
-      map_smul' r v := by
-          funext i
-          simp only [Pi.smul_apply, map_smul, RingHom.id_apply]
-          rw [Finset.smul_sum]
-    }
-    --Proof they are inverse
-    left_inv := by
-      intro F
-      ext a b
-      simp only [LinearMap.coe_mk, AddHom.coe_mk, LinearMap.coe_comp, LinearMap.coe_single,
-        Function.comp_apply, Pi.single_apply]
-      rw [Finset.sum_eq_single a]
-      · simp only [↓reduceIte]
-      · simp only [Finset.mem_univ, ne_eq, forall_const]
-        intro c cna
-        rw [if_neg cna, Pi.single_zero, map_zero, Pi.zero_apply]
-      · simp only [Finset.mem_univ, not_true_eq_false, ↓reduceIte, IsEmpty.forall_iff]
-
-    right_inv := by
-      intro M
-      ext a b c
-      simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_apply]
-      rw [Finset.sum_eq_single b]
-      · simp only [↓reduceIte]
-      · simp only [Finset.mem_univ, ne_eq, forall_const]
-        intro d dnb
-        rw [if_neg dnb]
-        exact LinearMap.map_zero (M a d)
-      · simp only [Finset.mem_univ, not_true_eq_false, ↓reduceIte, IsEmpty.forall_iff]
-
-
-/-
-Hopefully proves that if S and T are simple modules that are not isomorphic, then
-their direct sums are orthogonal.
-
-Was intended for usage in the proof of Lemma 5.
--/
-
-
-theorem isotypic_orthogonality
-  {S T : Type*} [AddCommGroup S] [Module R S] [AddCommGroup T] [Module R T]
-  [IsSimpleModule R S] [IsSimpleModule R T]
-  (n m : ℕ)
-  (h_distinct : ¬ Nonempty (S ≃ₗ[R] T))
-  (f : (Fin n → S) →ₗ[R] (Fin m → T)) : f = 0 :=
-  by
-    apply LinearMap.ext
-    intro vec
-    ext k
-
-    have h_decomp : vec = ∑ idx, Pi.single idx (vec idx) := by
-      ext idx
-      simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
-
-    rw [h_decomp, map_sum, Finset.sum_apply]
-    apply Finset.sum_eq_zero
-    intros j _
-
-    let f_component : S →ₗ[R] T := {
-      toFun := fun s ↦ (f (Pi.single j s)) k
-
-      map_add' := by simp only [Pi.single_add, map_add, Pi.add_apply, implies_true]
-
-      map_smul' := by simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply,
-        implies_true]
-    }
-
-    have h_map_is_zero : f_component = 0 := by
-      by_contra h_nonzero
-
-      have h_ker : LinearMap.ker f_component = ⊥ :=
-        (eq_bot_or_eq_top (LinearMap.ker f_component)).resolve_right
-        (fun h_top => h_nonzero (LinearMap.ker_eq_top.mp h_top))
-
-      have h_range : LinearMap.range f_component = ⊤ :=
-        (eq_bot_or_eq_top (LinearMap.range f_component)).resolve_left
-        (fun h_bot => h_nonzero (LinearMap.range_eq_bot.mp h_bot))
-
-      exact h_distinct ⟨LinearEquiv.ofBijective f_component
-        ⟨LinearMap.ker_eq_bot.mp h_ker, LinearMap.range_eq_top.mp h_range⟩⟩
-
-    change f_component (vec j) = 0
-    rw [h_map_is_zero]
-    simp
-
-variable {R : Type*} [Ring R]
-variable {ι : Type*}
-variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
-
---Basically just schurs lemma, if a map between simple modules isnt an iso, its 0.
-theorem Simple_Hom_Eq_Zero_If_Not_Iso
-    {i j : ι} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
-    (h_not_iso : ¬ Nonempty (M i ≃ₗ[R] M j)) (f : M i →ₗ[R] M j) : f = 0 := by
-    classical
-    by_contra hf
-    apply h_not_iso
-    have h' : Function.Bijective f :=
-    schur.schurs (i := i) (j := j) f hf
-    refine ⟨LinearEquiv.ofBijective f h'⟩
-
-end Grave_Yard
