@@ -1045,7 +1045,15 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
         rw [index_equiv.apply_symm_apply i] at h
         exact congr_arg_heq f (id (Eq.symm h))
 
-      right_inv := fun g => by sorry
+      right_inv := fun g => by
+        funext j
+        dsimp only [Lean.Elab.WF.paramLet]
+        rw [← (iso_matrix_op j).apply_symm_apply (g j)]
+        apply congr_arg (iso_matrix_op j).toFun
+        apply eq_of_heq
+        apply HEq.trans (cast_heq _ _)
+        apply congr_arg_heq (fun k => (iso_matrix_op k).symm (g k))
+        exact index_equiv.symm_apply_apply j
 
       map_add' := fun x y => by
         ext
