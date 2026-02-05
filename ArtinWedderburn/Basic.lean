@@ -981,10 +981,18 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
       ≃+* (Π (i : Fin ι), Matrix (Fin (n i)) (Fin (n i)) (D i)) :=
     {
       toFun := fun f j => iso_matrix_op j (f (index_equiv j)),
-      invFun := fun g i => sorry,
-      left_inv := fun f => by sorry,
-      right_inv := fun g => by sorry,
-      map_add' := fun x y => by ext; simp [Pi.add_apply, map_add],
+
+      invFun := fun g i =>
+        let j := index_equiv.symm i
+        let val := (iso_matrix_op j).symm (g j)
+        let type := fun (k : Fin m_raw) => (Matrix (Fin (n_raw k)) (Fin (n_raw k)) (D_raw k))ᵐᵒᵖ
+        let h_subtype : index_equiv j = i := index_equiv.apply_symm_apply i
+        let h_val : (index_equiv j : Fin m_raw) = (i : Fin m_raw) := congr_arg Subtype.val h_subtype
+        cast (congr_arg type h_val) val
+
+      left_inv := fun f => by sorry
+      right_inv := fun g => by sorry
+      map_add' := fun x y => by ext; simp [Pi.add_apply, map_add]
       map_mul' := fun x y => by ext; simp [Pi.mul_apply, map_mul]
     }
 
