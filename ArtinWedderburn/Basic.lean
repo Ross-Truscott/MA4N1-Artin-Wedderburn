@@ -239,9 +239,8 @@ This is still true without the simplicity assumption, so this is what we prove.
 def NEndEquivMatrixEnd
   (n : ℕ) (R : Type) [Ring R] (S : Type) [AddCommGroup S] [Module R S] :
   Module.End R (Fin n → S) ≃ Matrix (Fin n) (Fin n) (Module.End R S) where
-    --Def of forwards map
     toFun F i j :=
-      {
+      { --Sends s to the satndard basis vector e_j, apply f, then pick out the ith coordinate
         toFun s := F (Pi.single j s) i
         --Proof its linear
         map_add' s t := by
@@ -250,11 +249,9 @@ def NEndEquivMatrixEnd
           rw [Pi.single_smul]
           simp only [map_smul, Pi.smul_apply, RingHom.id_apply]
         }
-      --Def of reverse map
     invFun M :=
-    {
-      toFun v i :=
-        ∑ j, M i j (v j)
+    { --Picks out the ith coordinate of the image of the jth coordinate under the linear map
+      toFun v i := ∑ j, M i j (v j)
         --Proof its linear
       map_add' v w := by
           funext i
@@ -371,7 +368,7 @@ def RopToEndRMap --Defines the map in the above proof
     map_one' := by
       ext
       simp only [MulOpposite.unop_one, mul_one, LinearMap.coe_mk, AddHom.coe_mk,
-        Module.End.one_apply]
+    Module.End.one_apply]
     map_mul' := by
       intros x y
       ext
@@ -442,7 +439,7 @@ theorem Isotypic_Hom_Eq_Zero
     rw [← Finset.univ_sum_single v, map_sum]
     simp only [Finset.sum_apply, map_sum, LinearMap.zero_apply, Pi.zero_apply,
       Finset.sum_const_zero]
-    apply Finset.sum_eq_zero --Want to show each term is 0
+    apply Finset.sum_eq_zero --Want to show each term of the sum is 0
     intro j a
     let component_map : S →ₗ[R] T := {
       toFun := fun s => (f (Pi.single j s)) k -- this is the inclsion, map, projection
@@ -466,7 +463,7 @@ def End_DirectSum_Equiv_DirectSum_End
   (h_pairwise : Pairwise (fun i j ↦ ∀ f : M i →ₗ[R] M j, f = 0)) :
   Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i) where
     toFun F i := {
-      toFun := fun m ↦ (F (Pi.single i m)) i --first include, apply F, then project
+      toFun := fun m ↦ (F (Pi.single i m)) i --include, apply F, project
       map_add' := by
         intros x y
         rw [Pi.single_add, map_add, Pi.add_apply]
@@ -555,216 +552,6 @@ def End_DirectSum_Equiv_DirectSum_End
         exact LinearMap.congr_fun h_zero (v j)
       · intro hk
         exact (hk (Finset.mem_univ _)).elim
-
-/-
-Establishes that given our M_i are orthogonal, we have a ring isomorphism
-between the endomorphism ring of the direct sum of M_i, and the product
-of individual endomorphism rings of each M_i.
--/
-
-def End_DirectSum_Orthogonal
-  {ι : Type*} [Fintype ι] [DecidableEq ι]
-  (M : ι → Type*) [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
-  (h_ortho : ∀ i j, i ≠ j → ∀ (f : M i →ₗ[R] M j), f = 0) :
-  Module.End R ((i : ι) → M i) ≃+* Π i, Module.End R (M i)
-  where
-    toFun F i := {
-      toFun := fun m ↦ (F (Pi.single i m)) i
-      map_add' := by simp only [Pi.single_add, map_add, Pi.add_apply, implies_true]
-      map_smul' := by simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply,
-        implies_true]
-    }
-
-    invFun f := {
-      toFun := fun v i ↦ f i (v i)
-      map_add' := by
-        intros
-        ext
-        simp only [Pi.add_apply, map_add]
-      map_smul' := by
-        intros
-        ext
-        simp only [Pi.smul_apply, map_smul, RingHom.id_apply]
-    }
-
-    map_add' := by
-      intros
-      ext
-      simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk]
-
-    map_mul' := by
-      intros F G
-      ext i m
-      simp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk, Pi.mul_apply]
-      let v := G (Pi.single i m)
-
-      have h_off_diag_is_zero : ∀ j, i ≠ j → v j = 0 := by
-        intros j hij
-
-        let f_ij : M i →ₗ[R] M j := {
-          toFun := fun x ↦ (G (Pi.single i x)) j
-          map_add' := by
-            intros
-            simp only [Pi.single_add, map_add, Pi.add_apply]
-          map_smul' := by
-            intros
-            simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
-        }
-
-        exact LinearMap.congr_fun (h_ortho i j hij f_ij) m
-
-      have hv_eq : v = Pi.single i (v i) := by
-        ext j; by_cases h : i = j
-        · rw [h, Pi.single_eq_same]
-        · rw [h_off_diag_is_zero j h, Pi.single_eq_of_ne (Ne.symm h)]
-
-      rw [← hv_eq]
-
-    left_inv := by sorry
-
-    right_inv := by
-      intro f
-      ext
-      simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_eq_same]
-
-/-
-Should give a ring isomorphism between the endomorphism ring of a finite direct sum of
-the module S and the ring of matrices over the endomorphism ring of S.
--/
-
-def End_PowerOfS_Equiv_Matrix
-  (S : Type*) [AddCommGroup S] [Module R S] (n : ℕ) :
-  Module.End R (Fin n → S) ≃+* Matrix (Fin n) (Fin n) (Module.End R S)
-  where
-    toFun f i j := {
-      toFun := fun s ↦ (f (Pi.single j s)) i
-
-      map_add' := by
-        intros
-        simp only [Pi.single_add, map_add, Pi.add_apply]
-
-      map_smul' := by
-        intros
-        simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
-    }
-
-    invFun M := {
-      toFun := fun v i ↦ ∑ j, (M i j) (v j)
-
-      map_add' := by
-        intros
-        funext
-        simp only [Pi.add_apply, map_add, Finset.sum_add_distrib]
-
-      map_smul' := by
-        intros
-        funext
-        simp only [Pi.smul_apply, map_smul, RingHom.id_apply, Finset.smul_sum]
-    }
-
-    map_add' := by
-      intros
-      ext
-      simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk,
-        Matrix.add_apply]
-
-    map_mul' := by
-      intros f g
-      ext i j s
-      dsimp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk]
-
-      have h_vector_decomp : (g (Pi.single j s)) = ∑ k, Pi.single k ((g (Pi.single j s)) k) := by
-        ext k
-        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
-          ↓reduceIte]
-
-      rw [h_vector_decomp]
-      rw [map_sum]
-      simp [Finset.sum_apply]
-
-      rw [Matrix.mul_apply]
-      simp only [LinearMap.coeFn_sum, Finset.sum_apply, Module.End.mul_apply, LinearMap.coe_mk,
-        AddHom.coe_mk]
-
-    left_inv := by
-      intro f
-      apply LinearMap.ext
-      intro vec
-      ext k
-      dsimp only [LinearMap.coe_mk, AddHom.coe_mk]
-
-      have h_vector_decomp : vec = ∑ idx, Pi.single idx (vec idx) := by
-        ext idx
-        simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ,
-          ↓reduceIte]
-
-      conv_rhs =>
-        rw [h_vector_decomp]
-        rw [map_sum]
-        rw [Finset.sum_apply]
-
-    right_inv := by
-      intro M
-      ext i j s
-      simp only [LinearMap.coe_mk, AddHom.coe_mk]
-      rw [Finset.sum_eq_single j]
-      · simp only [Pi.single_eq_same]
-      · intros k _ h_neq
-        simp only [Pi.single_apply, if_neg h_neq, map_zero]
-      · intro h; exact (h (Finset.mem_univ j)).elim
-
-/-
-Hopefully proves that if S and T are simple modules that are not isomorphic, then
-their direct sums are orthogonal.
--/
-
-theorem isotypic_orthogonality
-  {S T : Type*} [AddCommGroup S] [Module R S] [AddCommGroup T] [Module R T]
-  [IsSimpleModule R S] [IsSimpleModule R T]
-  (n m : ℕ)
-  (h_distinct : ¬ Nonempty (S ≃ₗ[R] T))
-  (f : (Fin n → S) →ₗ[R] (Fin m → T)) : f = 0 :=
-  by
-    apply LinearMap.ext
-    intro vec
-    ext k
-
-    have h_decomp : vec = ∑ idx, Pi.single idx (vec idx) := by
-      ext idx
-      simp only [Finset.sum_apply, Pi.single_apply, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
-
-    rw [h_decomp, map_sum, Finset.sum_apply]
-    apply Finset.sum_eq_zero
-    intros j _
-
-    let f_component : S →ₗ[R] T := {
-      toFun := fun s ↦ (f (Pi.single j s)) k
-
-      map_add' := by simp only [Pi.single_add, map_add, Pi.add_apply, implies_true]
-
-      map_smul' := by simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply,
-        implies_true]
-    }
-
-    have h_map_is_zero : f_component = 0 := by
-      by_contra h_nonzero
-
-      have h_ker : LinearMap.ker f_component = ⊥ :=
-        (eq_bot_or_eq_top (LinearMap.ker f_component)).resolve_right
-        (fun h_top => h_nonzero (LinearMap.ker_eq_top.mp h_top))
-
-      have h_range : LinearMap.range f_component = ⊤ :=
-        (eq_bot_or_eq_top (LinearMap.range f_component)).resolve_left
-        (fun h_bot => h_nonzero (LinearMap.range_eq_bot.mp h_bot))
-
-      exact h_distinct ⟨LinearEquiv.ofBijective f_component
-        ⟨LinearMap.ker_eq_bot.mp h_ker, LinearMap.range_eq_top.mp h_range⟩⟩
-
-    change f_component (vec j) = 0
-    rw [h_map_is_zero]
-    simp only [LinearMap.zero_apply]
-
-variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
 
 /-
 Intended to provide isotypic decomposition of semisimple modules.
