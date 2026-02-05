@@ -887,6 +887,8 @@ An attempted statement of Lemma 5, in slightly different form of that to the out
 
 Proof difficult.
 -/
+
+
 theorem Lemma5
   [IsArtinian R M] [IsSemisimpleModule R M] :
   ∃ (m : ℕ)
@@ -898,9 +900,6 @@ theorem Lemma5
 
 
 /-
-<<<<<<< HEAD
-Artin-Wedderburn Theorem
-=======
 This is a proof of lemma 5 from the outline, which states:
 For a semi-simple Artinian right R module (left R^op module) M,
  End_R(M) ≅ ⊕ M_{a_i}(D_i)
@@ -908,6 +907,7 @@ for a division rings D_i and non-negative integers a_i.
 
 The proof of this is essentially just colating all of the prior work.
 -/
+
 
 def End_SemisimpleM_Iso_Sum_Of_Matrices
   (R : Type*) [Ring R]
@@ -922,9 +922,13 @@ def End_SemisimpleM_Iso_Sum_Of_Matrices
 
     map_mul' := sorry
 
+    left_inv := sorry
+
+    right_inv := sorry
+
+
 /-
 Artin-Wedderburn Theorem.
->>>>>>> 738f7fb (Added some comments, and some context to lemma 5)
 -/
 
 
