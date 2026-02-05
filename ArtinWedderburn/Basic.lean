@@ -225,8 +225,11 @@ end schur
 /-
 This is the Proof of Lemma 2 from the outline, which states:
 
-Thm: Let S be a simple R-module and D = End_R(S). Define M = S^n. Then End_R(M) = M_n(D)
-Proof : End(M) is determined by the action on each summand S. So, look at the inclusion
+Result:
+Let S be a simple R-module and D = End_R(S). Define M = S^n. Then End_R(M) = M_n(D).
+
+Proof:
+End(M) is determined by the action on each summand S. So, look at the inclusion
 ιᵢ: S → M & projection πᵢ: M → S and consider f_ij = πᵢfιⱼ ∈ End(S).
 Elements of M are (s_1,…,s_n) so we can consider
 f(s_1,…,s_n) = (∑f_1j(s_j),…,∑f_nj(s_j)), but this is just the matrix representation.
@@ -240,7 +243,7 @@ def End_PowerOfS_Equiv_Matrix
   (R : Type*) [Ring R] (S : Type*) [AddCommGroup S] [Module R S] (n : ℕ) :
   Module.End R (Fin n → S) ≃+* Matrix (Fin n) (Fin n) (Module.End R S)
   where
-  --Send s to the satndard basis vector e_j, apply f, then pick out the ith coordinate
+    --Send s to the satndard basis vector e_j, apply f, then pick out the ith coordinate
     toFun f i j := {
       toFun := fun s ↦ (f (Pi.single j s)) i
       map_add' := by
@@ -251,7 +254,7 @@ def End_PowerOfS_Equiv_Matrix
         intros
         simp only [Pi.single_smul, map_smul, Pi.smul_apply, RingHom.id_apply]
     }
---Pick out the ith coordinate of the image of the jth coordinate under the linear map
+    --Pick out the ith coordinate of the image of the jth coordinate under the linear map
     invFun M := {
       toFun := fun v i ↦ ∑ j, (M i j) (v j)
       map_add' := by
@@ -264,7 +267,7 @@ def End_PowerOfS_Equiv_Matrix
         funext
         simp only [Pi.smul_apply, map_smul, RingHom.id_apply, Finset.smul_sum]
     }
---Proof that this is a homomorphism
+    --Proof that this is a homomorphism
     map_add' := by
       intros
       ext
@@ -288,7 +291,7 @@ def End_PowerOfS_Equiv_Matrix
       rw [Matrix.mul_apply]
       simp only [LinearMap.coeFn_sum, Finset.sum_apply, Module.End.mul_apply, LinearMap.coe_mk,
         AddHom.coe_mk]
---Proof that our functions are inverse
+    --Proof that our functions are inverse
     left_inv := by
       intro f
       apply LinearMap.ext
@@ -316,13 +319,12 @@ def End_PowerOfS_Equiv_Matrix
         simp only [Pi.single_apply, if_neg h_neq, map_zero]
       · intro h; exact (h (Finset.mem_univ j)).elim
 
-
 namespace Lemma3
 
 variable {R : Type*} [Ring R]
 variable {ι : Type*} [DecidableEq ι]
 
-/--
+/-
 Textbook argument, see Anthony Knapp, Advanced Algebra, pp. 81:
 We are about to prove a semi simple ring is an internal direct sum of
 finitely many of its minimal left ideals.
@@ -372,9 +374,13 @@ theorem exists_finset_iSup_eq_top_of_isInternal
 end Lemma3
 
 /-
-This is a proof of lemma 4 from the outline, which states:
+This is a proof of lemma 4 from the outline.
+
+Result:
 For any (unital) ring R, End_R(R) ≅ R.
 That is, a ring is isomorphic to the endomorphism ring of itself viewed as a right module.
+
+Proof:
 The proof is simply to consider the map φ_r:R→End_R(R) by φ_r(s)=rs
 and go through the easy verification that it's bijective and a homomorphism.
 
@@ -530,7 +536,7 @@ def End_DirectSum_Equiv_DirectSum_End
       ext i j
       simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk]
 
--- I think this looks dense but its basically just showing the product of diagonal matrices is diag.
+    -- I think this looks dense but its basically just showing the product of diagonal matrices is diag.
     map_mul' := by
       intros F G
       ext i m
@@ -547,7 +553,7 @@ def End_DirectSum_Equiv_DirectSum_End
             intros m x
             rw [RingHom.id_apply, Pi.single_smul, LinearMap.map_smul_of_tower, Pi.smul_apply]
         }
-          --This shows the j-th component from the above is 0, which is by schurs/assumption
+        --This shows the j-th component from the above is 0, which is by schurs/assumption
         have : f = 0 :=  (h_pairwise hij) f
         exact LinearMap.congr_fun this m
 
@@ -558,14 +564,14 @@ def End_DirectSum_Equiv_DirectSum_End
         · rw [h_off_diag j h, Pi.single_eq_of_ne (Ne.symm h)]
       rw [← hv_eq]
 
-      --Proof they're inverse
+    -- Proof they're inverse
     right_inv := by
       intro f
       ext i m
       simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_eq_same]
 
---As with map_mul, this looks quite dense but is fine, we just need to define a map
---so that we can apply schurs lemma to say the off diagonals are 0
+    -- As with map_mul, this looks quite dense but is fine, we just need to define a map
+    -- So that we can apply schurs lemma to say the off diagonals are 0
     left_inv := by
       intro F
       apply LinearMap.ext
