@@ -557,6 +557,8 @@ def End_DirectSum_Equiv_DirectSum_End
 Intended to provide isotypic decomposition of semisimple modules.
 -/
 
+variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
+
 theorem existence_of_isotypic_decomposition
   [IsArtinian R M] [IsSemisimpleModule R M] :
   ∃ (m : ℕ)
