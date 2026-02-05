@@ -1106,13 +1106,13 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
 end main_result
 
 namespace Grave_Yard
+
 /-
 There were a number of theorems that we proved and didnt end up needing, or accidently did twice
 by working independently. For completeness, we list them here.
 -/
 
 /-
-NEW HELPER FUNCTION 1
 Establishes that given our M_i are orthogonal, we have a ring isomorphism
 between the endomorphism ring of the direct sum of M_i, and the product
 of individual endomorphism rings of each M_i.
@@ -1185,7 +1185,6 @@ def End_DirectSum_Orthogonal
       simp only [LinearMap.coe_mk, AddHom.coe_mk, Pi.single_eq_same]
 
 /-
-NEW HELPER FUNCTION 2
 Should give a ring isomorphism between the endomorphism ring of a finite direct sum of
 the module S and the ring of matrices over the endomorphism ring of S.
 
@@ -1276,11 +1275,10 @@ def End_PowerOfS_Equiv_Matrix
       · intro h; exact (h (Finset.mem_univ j)).elim
 
 /-
-NEW HELPER FUNCTION 3
 Hopefully proves that if S and T are simple modules that are not isomorphic, then
 their direct sums are orthogonal.
 
-Also intended for usage in the proof of Lemma 5.
+Was intended for usage in the proof of Lemma 5.
 -/
 
 
@@ -1331,7 +1329,7 @@ theorem isotypic_orthogonality
     simp
 
 variable {R : Type*} [Ring R]
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {ι : Type*}
 variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
 --Basically just schurs lemma, if a map between simple modules isnt an iso, its 0.
@@ -1344,3 +1342,5 @@ theorem Simple_Hom_Eq_Zero_If_Not_Iso
     have h' : Function.Bijective f :=
     schur.schurs (i := i) (j := j) f hf
     refine ⟨LinearEquiv.ofBijective f h'⟩
+
+end Grave_Yard
