@@ -1067,11 +1067,28 @@ theorem artin_wedderburn {R : Type u} [Ring R] [IsArtinianRing R] [IsSemisimpleR
       (Π (i : valid_indices), (Matrix (Fin (n_raw i)) (Fin (n_raw i)) (D_raw i))ᵐᵒᵖ)
       ≃+* (Π (i : Fin ι), Matrix (Fin (n i)) (Fin (n i)) (D i)) :=
     {
-      toFun := fun f j => iso_matrix_op j (f (index_equiv j)),
-      invFun := fun g i => sorry,
-      left_inv := fun f => by sorry,
-      right_inv := fun g => by sorry,
-      map_add' := fun x y => by ext; simp [Pi.add_apply, map_add],
+      toFun := fun f j => iso_matrix_op j (f (index_equiv j))
+
+      invFun := fun g i =>
+        let j := index_equiv.symm i
+        let val := (iso_matrix_op j).symm (g j)
+        let type := fun (k : Fin m_raw) => (Matrix (Fin (n_raw k)) (Fin (n_raw k)) (D_raw k))ᵐᵒᵖ
+        let h_subtype : index_equiv j = i := index_equiv.apply_symm_apply i
+        let h_val : (index_equiv j : Fin m_raw) = (i : Fin m_raw) := congr_arg Subtype.val h_subtype
+        cast (congr_arg type h_val) val
+
+      left_inv := fun f => by
+        ext i
+        dsimp only [Lean.Elab.WF.paramLet]
+        apply eq_of_heq
+        apply HEq.trans (cast_heq _ _)
+        rw [RingEquiv.symm_apply_apply]
+        generalize h : index_equiv (index_equiv.symm i) = j
+        rw [index_equiv.apply_symm_apply i] at h
+        exact congr_arg_heq f (id (Eq.symm h))
+
+      right_inv := fun g => by sorry
+      map_add' := fun x y => by ext; simp [Pi.add_apply, map_add]
       map_mul' := fun x y => by ext; simp [Pi.mul_apply, map_mul]
     }
 
