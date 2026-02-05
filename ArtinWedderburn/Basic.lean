@@ -16,36 +16,47 @@ import Mathlib.Order.Atoms
 
 namespace schur
 
--- Define two rings and a ring homomorphism between them.
+-- Declares rings R, S and a homomorphism between them, as well as a family of modules over R.
 variable {R : Type*} [Ring R]
 variable {S : Type*} [Ring S]
 variable (f : R →+* S)
 variable {ι : Type*}
 variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 
+-- Defines what it means for subset S of R to be an ideal.
 def ideal (S : Set R) : Prop :=
   (0 ∈ S) ∧
   (∀ x y, x ∈ S → y ∈ S → x+y ∈ S) ∧
   (∀ x, x ∈ S → -x ∈ S) ∧
   (∀ x r, x ∈ S → r * x ∈ S)
 
--- Statement and proof of the theorem that the kernel of a ring homomorphism is an ideal.
+/-
+Theorem:
+The kernel of a ring homomorphism is an ideal.
+
+Proof:
+1) First shows that f(0) = 0.
+2) Closure under addition.
+3) Closure under negation.
+4) Absorption property.
+-/
+
 theorem ker_hom_is_ideal :
   ideal {r : R | f r = 0} :=
   by
     constructor
-    · simp
+    · simp only [Set.mem_setOf_eq, map_zero]
 
     constructor
     · intro x y hx hy
-      simp at *
+      simp only [Set.mem_setOf_eq, map_add] at *
       rw [hx, hy, zero_add]
 
     constructor
-    · simp
+    · simp only [Set.mem_setOf_eq, map_neg, neg_eq_zero, imp_self, implies_true]
 
     intro x r hx
-    simp at *
+    simp only [Set.mem_setOf_eq, map_mul] at *
     rw [hx, mul_zero]
 
 
@@ -187,12 +198,8 @@ theorem schurs {i j} [IsSimpleModule R (M i)] [IsSimpleModule R (M j)]
 
 end schur
 
-namespace temporary
-
-
-end temporary
-
 namespace Lemma2
+
 /-
 This is the Proof of Lemma 2 from the outline, which states:
 
