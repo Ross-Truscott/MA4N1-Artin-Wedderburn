@@ -409,7 +409,6 @@ noncomputable def RingEquivEnd
         rw [← smul_eq_mul, ← LinearMap.map_smul, smul_eq_mul, mul_one]
     ⟩
 
-
 /-
 Proof that given disctinct modules S_i such that Hom(S_i,S_j) = 0, End(⊕S_i) ≅ ⊕End(S_i).
 
@@ -419,7 +418,6 @@ Thus, for AW, we need to prove that for isotypic
 (i.e. built out of copies of a single simple module) modules M,N, Hom(M,N) = 0,
 that is, the big matrix is diagonal. Since lemma 2 is a special case, the proof goes similarly.
 -/
-
 
 variable {R : Type*} [Ring R]
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
@@ -554,7 +552,8 @@ def End_DirectSum_Equiv_DirectSum_End
         exact (hk (Finset.mem_univ _)).elim
 
 /-
-Intended to provide isotypic decomposition of semisimple modules.
+Result:
+That an Artinian semisimple module has an isotypic decomposition.
 -/
 
 variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
@@ -576,7 +575,13 @@ namespace main_result
 variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
 
 /-
-Hopefully says that isomorphic modules have isomorphic rings of endomorphisms.
+Result:
+Constructs ring isomorphism between the endomorphism rings of isomorphic modules.
+
+Proof:
+1) Showing bijectivity by constructing inverses.
+2) Showing additivity.
+3) Showing multiplicativity.
 -/
 
 def ringConj {R M N : Type*} [Ring R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
@@ -607,23 +612,22 @@ def ringConj {R M N : Type*} [Ring R] [AddCommGroup M] [Module R M] [AddCommGrou
   }
 
 /-
-We unfortunatley couldnt work out how to state and prove lemma 5 in the time we had.
-The usual proof goes as follows:
+We unfortunately could not work out how to state and prove lemma 5
+in exactly the form in the outline. The usual proof goes as follows:
 M is semisimple and Artinian, hence is the direct sum of finitely many simple submodules I_j.
 These I_j may not be pairwise distinct, so we group there togther with multiplicity to get
 the isotypic decomposition of M, M≅ ⊕S_i≅ ⊕I_i^{n_i}. Then, by Isotypic_Hom_Eq_Zero,
 End_DirectSum_Equiv_DirectSum_End and ringConj we have,
 End(M)≅End(⊕S_i)≅⊕M_n(D) by NEndEquivMatrixEnd with D = End(S_i).
 
-The lemmas for all of this exists, but working out how to get the isotypic decomposition
-and how to chain all of these lemmas together turned out to be quite difficult. We ended up with
-two slightly different statments, neither proven, but one able to be used for the main proof.
+The lemmas for all of this exists, but working out how to chain all
+of these lemmas together turned out to be quite difficult. We ended up with
+two slightly different statements, neither proven, but one able to be used for the main proof.
 -/
 
 /-
-An attempted statement of Lemma 5, in slightly different form of that to the outline.
-
-Proof difficult.
+Result:
+Slightly altered statement of Lemma 5 in the outline.
 -/
 
 theorem Lemma5
@@ -864,8 +868,9 @@ end main_result
 namespace Grave_Yard
 
 /-
-There were a number of theorems that we proved and didnt end up needing, or accidently did twice
-by working independently. For completeness, we list them here.
+There were a number of theorems that we proved and did not end up needing, or where the statements
+were in the end not exactly as required, leading to their replacement.
+For completeness, we list them here.
 -/
 
 /-
