@@ -536,7 +536,7 @@ def End_DirectSum_Equiv_DirectSum_End
       ext i j
       simp only [LinearMap.add_apply, Pi.add_apply, LinearMap.coe_mk, AddHom.coe_mk]
 
-    -- I think this looks dense but its basically just showing the product of diagonal matrices is diag.
+    -- Looks dense but is just showing the product of diagonal matrices is diag.
     map_mul' := by
       intros F G
       ext i m
