@@ -332,6 +332,7 @@ These statements are dual to each other however, right R modules are left R^op m
 This means we actually aim to prove R≅M_n(D)ᵒᵖ in the end.
 -/
 
+
 def RopToEndRMap --Defines the map in the above proof
     (R : Type) [Ring R] :
     Rᵐᵒᵖ →+* Module.End R R :=
@@ -384,6 +385,7 @@ noncomputable def RingEquivEnd
         rw [← smul_eq_mul, ← LinearMap.map_smul, smul_eq_mul, mul_one]
     ⟩
 
+
 /-
 Proof that given disctinct modules S_i such that Hom(S_i,S_j) = 0, End(⊕S_i) ≅ ⊕End(S_i).
 
@@ -393,6 +395,7 @@ Thus, for AW, we need to prove that for isotypic
 (i.e. built out of copies of a single simple module) modules M,N, Hom(M,N) = 0,
 that is, the big matrix is diagonal. Since lemma 2 is a special case, the proof goes similarly.
 -/
+
 
 variable {R : Type*} [Ring R]
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
@@ -405,7 +408,7 @@ variable {M : ι → Type*} [∀ i, AddCommGroup (M i)] [∀ i, Module R (M i)]
 theorem Isotypic_Hom_Eq_Zero
   (n m : ℕ) (R : Type) [Ring R] (S T : Type)
   [AddCommGroup S] [Module R S] [AddCommGroup T] [Module R T]
-  (h_not_iso: ∀ f : S →ₗ[R] T, f = 0) (f : (Fin n → S) →ₗ[R] (Fin m → T)) : f = 0 := by
+  (h_not_iso : ∀ f : S →ₗ[R] T, f = 0) (f : (Fin n → S) →ₗ[R] (Fin m → T)) : f = 0 := by
     apply LinearMap.ext
     intro v
     ext k
@@ -528,12 +531,9 @@ def End_DirectSum_Equiv_DirectSum_End
 
 
 /-
-NEW HELPER FUNCTION 1
 Establishes that given our M_i are orthogonal, we have a ring isomorphism
 between the endomorphism ring of the direct sum of M_i, and the product
 of individual endomorphism rings of each M_i.
-
-Intended for usage in the proof of Lemma 5.
 -/
 
 
@@ -603,7 +603,6 @@ def End_DirectSum_Orthogonal
 
 
 /-
-NEW HELPER FUNCTION 2
 Should give a ring isomorphism between the endomorphism ring of a finite direct sum of
 the module S and the ring of matrices over the endomorphism ring of S.
 
@@ -694,11 +693,8 @@ def End_PowerOfS_Equiv_Matrix
 
 
 /-
-NEW HELPER FUNCTION 3
 Hopefully proves that if S and T are simple modules that are not isomorphic, then
 their direct sums are orthogonal.
-
-Also intended for usage in the proof of Lemma 5.
 -/
 
 
@@ -753,10 +749,7 @@ variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
 
 
 /-
-NEW HELPER FUNCTION 4
 Intended to provide isotypic decomposition of semisimple modules.
-
-Also intended for usage in the proof of Lemma 5.
 -/
 
 
@@ -779,10 +772,7 @@ variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
 
 
 /-
-NEW HELPER FUNCTION 5
 Hopefully says that isomorphic modules have isomorphic rings of endomorphisms.
-
-Also intended for usage in the proof of Lemma 5.
 -/
 
 
